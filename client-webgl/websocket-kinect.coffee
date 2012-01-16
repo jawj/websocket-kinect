@@ -111,9 +111,9 @@ window.onload = ->
     updateCamPos()
   $(renderer.domElement).on('mousewheel', doCamZoom)
 
-
   dataCallback = (e) ->
-    bytes = new Uint8Array(e.data)
+    bzipped = new Uint8Array(e.data)
+    bytes = rawStringToUint8Array(bzip2.simple(bzip2.array(bzipped)))
     c = params.zcolors
     pvs = particles.vertices
     pcs = particles.colors if c

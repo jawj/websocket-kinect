@@ -126,8 +126,9 @@
     };
     $(renderer.domElement).on('mousewheel', doCamZoom);
     dataCallback = function(e) {
-      var byte, bytes, c, i, pc, pcs, pv, pvs, _len2;
-      bytes = new Uint8Array(e.data);
+      var byte, bytes, bzipped, c, i, pc, pcs, pv, pvs, _len2;
+      bzipped = new Uint8Array(e.data);
+      bytes = rawStringToUint8Array(bzip2.simple(bzip2.array(bzipped)));
       c = params.zcolors;
       pvs = particles.vertices;
       if (c) pcs = particles.colors;

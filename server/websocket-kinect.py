@@ -6,6 +6,7 @@ from autobahn.websocket import WebSocketServerFactory, WebSocketServerProtocol, 
 import freenect
 import signal
 import numpy
+import bz2
 
 class BroadcastServerProtocol(WebSocketServerProtocol):
   
@@ -40,12 +41,23 @@ class BroadcastServerFactory(WebSocketServerFactory):
 
 class Kinect:
   
+  def __init__(self):
+    useEvery = 4
+    h = 480 / useEvery
+    w = 640 / useEvery
+    self.useCols, self.useRows = numpy.indices((h, w))
+    self.useCols *= useEvery
+    self.useRows *= useEvery
+  
   def depthCallback(self, dev, depth, timestamp):
+    # print "%d min, %d max" % (numpy.min(depth), numpy.max(depth))
+    depth = depth[self.useCols, self.useRows]
     numpy.clip(depth, 0, 2 ** 10 - 1, depth)
     depth >>= 2
-    depth = depth[useCols, useRows]
+    # depth = (depth - 200) >> 3
     dataString = depth.astype(numpy.uint8).tostring()
-    reactor.callFromThread(factory.broadcast, dataString, True)
+    # reactor.callFromThread(factory.broadcast, dataString, True)
+    reactor.callFromThread(factory.broadcast, bz2.compress(dataString), True)
   
   def bodyCallback(self, *args):
     if not self.kinecting: raise freenect.Kill
@@ -60,13 +72,6 @@ class Kinect:
 def signalHandler(signum, frame):
   kinect.stop()
   reactor.stop()
-
-useEvery = 4
-h = 480 / useEvery
-w = 640 / useEvery
-useCols, useRows = numpy.indices((h, w))
-useCols *= useEvery
-useRows *= useEvery
 
 port = sys.argv[1] if len(sys.argv) > 1 else "9000"
 url = "ws://localhost:" + port
