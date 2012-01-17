@@ -6,7 +6,7 @@ from autobahn.websocket import WebSocketServerFactory, WebSocketServerProtocol, 
 import freenect
 import signal
 import numpy
-import bz2
+import pylzma
 
 class BroadcastServerProtocol(WebSocketServerProtocol):
   
@@ -48,17 +48,25 @@ class Kinect:
     self.useCols, self.useRows = numpy.indices((h, w))
     self.useCols *= useEvery
     self.useRows *= useEvery
+    
+    self.keyFrameEvery = 30
+    self.currentFrame = 0
   
   def depthCallback(self, dev, depth, timestamp):
-    # print "%d min, %d max" % (numpy.min(depth), numpy.max(depth))
     depth = depth[self.useCols, self.useRows]
     numpy.clip(depth, 0, 2 ** 10 - 1, depth)
     depth >>= 2
-    # depth = (depth - 200) >> 3
-    dataString = depth.astype(numpy.uint8).tostring()
-    # reactor.callFromThread(factory.broadcast, dataString, True)
-    reactor.callFromThread(factory.broadcast, bz2.compress(dataString), True)
-  
+    
+    diffDepth = depth if self.currentFrame == 0 else (depth - self.lastFrame) % 256
+    data = diffDepth.astype(numpy.uint8)
+    crunchedData = chr(self.currentFrame) + pylzma.compress(data)
+    reactor.callFromThread(factory.broadcast, crunchedData, True)
+    
+    self.lastFrame = depth
+    self.currentFrame += 1
+    if self.currentFrame == self.keyFrameEvery:
+      self.currentFrame = 0
+    
   def bodyCallback(self, *args):
     if not self.kinecting: raise freenect.Kill
   

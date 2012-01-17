@@ -29,7 +29,7 @@ window.onload = ->
   v = (x, y, z) -> new THREE.Vertex(new THREE.Vector3(x, y, z))
   
   renderer = new THREE.WebGLRenderer(antialias: true)
-  camera = new THREE.PerspectiveCamera(45, 1, 1, 10000)  # aspect (2nd param) shortly to be overridden...
+  camera = new THREE.PerspectiveCamera(60, 1, 1, 10000)  # aspect (2nd param) shortly to be overridden...
   
   dvp = window.devicePixelRatio ? 1
   setSize = ->
@@ -58,6 +58,7 @@ window.onload = ->
       xc = (x - (w / 2)) * useEvery * 2
       yc = ((h / 2) - y) * useEvery * 2
       particle = v(xc, yc, 0)
+      particle.usualY = yc
       particles.vertices.push(particle)
       color = new THREE.Color()
       particles.colors.push(color) if params.zcolors
@@ -68,7 +69,7 @@ window.onload = ->
   down = no
   sx = sy = 0
   last = new Date().getTime()
-  camZRange = [2200, 0]
+  camZRange = [1500, 0]
   camZ = camZRange[0]
   camT = new Transform()
   
@@ -103,27 +104,45 @@ window.onload = ->
       updateCamPos()
       sx += dx; sy += dy
   $(renderer.domElement).on('mousemove', doCamPan)
-
+  
   doCamZoom = (ev, d, dX, dY) ->
     camZ -= dY * 40
     camZ = Math.max(camZ, camZRange[1])
     camZ = Math.min(camZ, camZRange[0])
     updateCamPos()
   $(renderer.domElement).on('mousewheel', doCamZoom)
-
+  
+  prevBytes = null
+  seenKeyFrame = no
+  zc  = params.zcolors
+  pvs = particles.vertices
+  pcs = particles.colors if zc
+  
   dataCallback = (e) ->
-    bzipped = new Uint8Array(e.data)
-    bytes = rawStringToUint8Array(bzip2.simple(bzip2.array(bzipped)))
-    c = params.zcolors
-    pvs = particles.vertices
-    pcs = particles.colors if c
+    frameNo = new Uint8Array(e.data, 0, 1)[0]
+    return unless frameNo is 0 or seenKeyFrame
+    seenKeyFrame = yes
+    
+    inStream  = LZMA.wrapArrayBuffer(new Uint8Array(e.data, 1, e.data.byteLength - 1))
+    outStream = LZMA.wrapArrayBuffer(new Uint8Array(new ArrayBuffer(pvs.length)))
+    LZMA.decompress(inStream, inStream, outStream, pvs.length)
+    bytes = outStream.data
+    
     for byte, i in bytes
       pv = pvs[i]
-      pc = pcs[i] if c
-      pv.position.z = (255 - byte) * 10
-      pc.copy(colorSet[byte]) if c
+      pc = pcs[i] if zc
+      bytes[i] = byte = (prevBytes[i] + byte) % 256 if frameNo > 0
+      if byte is 255
+        pv.position.y = -5000
+      else
+        pv.position.y = pv.usualY
+        depth = 128 - byte
+        pv.position.z = depth * 10
+        pc.copy(colorSet[byte]) if zc
+      
+    prevBytes = bytes
     particleSystem.geometry.__dirtyVertices = yes
-    particleSystem.geometry.__dirtyColors   = yes if c
+    particleSystem.geometry.__dirtyColors   = yes if zc
     
   connect = ->
     url = 'ws://128.40.47.71:9000'
