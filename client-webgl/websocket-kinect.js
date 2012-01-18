@@ -127,8 +127,7 @@
       return updateCamPos();
     };
     $(renderer.domElement).on('mousewheel', doCamZoom);
-    prevBytes = null;
-    seenKeyFrame = false;
+    seenKeyFrame = prevBytes = null;
     zc = params.zcolors;
     pvs = particles.vertices;
     if (zc) pcs = particles.colors;
@@ -166,6 +165,7 @@
       console.log("Connecting to " + url + " ...");
       ws = new WebSocket(url);
       ws.binaryType = 'arraybuffer';
+      seenKeyFrame = false;
       ws.onopen = function() {
         return console.log('Connected');
       };

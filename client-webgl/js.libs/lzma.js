@@ -1,19 +1,6 @@
 
 var LZMA = LZMA || {};
 
-LZMA.wrapArrayBuffer = function(arr) {  // GM 2012-01-17
-  return {
-    data: arr,
-    offset: 0,
-    readByte: function() {
-      return this.data[this.offset ++];
-    },
-    writeByte: function(value){
-      this.data[this.offset ++] = value;
-    }
-  };
-}
-
 LZMA.OutWindow = function(){
   this._windowSize = 0;
 };
@@ -521,3 +508,33 @@ LZMA.decompress = function(properties, inStream, outStream, outSize){
 
   return true;
 };
+
+
+
+// additions: wrapping
+
+LZMA.wrapArrayBuffer = function(arr) {
+  return {
+    data: arr,
+    offset: 0,
+    readByte: function() {
+      return this.data[this.offset ++];
+    },
+    writeByte: function(value) {
+      this.data[this.offset ++] = value;
+    }
+  };
+};
+
+// additions: closure compiler (advanced)
+
+this['LZMA'] = LZMA;
+LZMA['decompress'] = LZMA.decompress;
+LZMA['wrapArrayBuffer'] = LZMA.wrapArrayBuffer;
+
+/** @preserve LZMA decompression library from http://code.google.com/p/js-lzma/ (MIT licenced)
+ * with addition of LZMA.wrapArrayBuffer (to wrap Uint8Arrays) 
+ * and exports for Closure Compiler ADVANCED_OPTIMIZATIONS
+ */
+
+// java -jar ~/bin/closure-compiler.jar --js js.libs/lzma.js --js_output_file js.libs/lzma.min.js --compilation_level ADVANCED_OPTIMIZATIONS

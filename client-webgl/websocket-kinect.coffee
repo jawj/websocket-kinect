@@ -112,8 +112,7 @@ window.onload = ->
     updateCamPos()
   $(renderer.domElement).on('mousewheel', doCamZoom)
   
-  prevBytes = null
-  seenKeyFrame = no
+  seenKeyFrame = prevBytes = null  # scoping
   zc  = params.zcolors
   pvs = particles.vertices
   pcs = particles.colors if zc
@@ -150,6 +149,7 @@ window.onload = ->
     console.log("Connecting to #{url} ...")
     ws = new WebSocket(url)
     ws.binaryType = 'arraybuffer'
+    seenKeyFrame = no
     ws.onopen = -> console.log('Connected')
     ws.onclose = -> 
       console.log("Disconnected: retrying in #{reconnectDelay}s")
