@@ -24,6 +24,13 @@ class BroadcastServerFactory(WebSocketServerFactory):
   def __init__(self, url):
     WebSocketServerFactory.__init__(self, url)
     self.clients = []
+    self.dataSent = 0
+    self.tick()
+  
+  def tick(self):
+    print '%d bytes/sec' % self.dataSent
+    self.dataSent = 0
+    reactor.callLater(1, self.tick)
   
   def register(self, client):
     if not client in self.clients:
@@ -36,6 +43,7 @@ class BroadcastServerFactory(WebSocketServerFactory):
       self.clients.remove(client)
   
   def broadcast(self, msg, binary = False):
+    self.dataSent += len(msg)
     for c in self.clients:
       c.sendMessage(msg, binary)
 
@@ -59,7 +67,7 @@ class Kinect:
     
     diffDepth = depth if self.currentFrame == 0 else (depth - self.lastFrame) % 256
     data = diffDepth.astype(numpy.uint8)
-    crunchedData = chr(self.currentFrame) + pylzma.compress(data)
+    crunchedData = chr(self.currentFrame) + pylzma.compress(data, dictionary = 19)  # default dict: 23 -> 2 ** 23 -> 8MB
     reactor.callFromThread(factory.broadcast, crunchedData, True)
     
     self.lastFrame = depth
