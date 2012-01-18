@@ -1,0 +1,21 @@
+
+# On Mac OS (Lion) with homebrew:
+
+brew install pkg-config
+brew install xz
+sudo easy_install pylzma
+sudo easy_install pip
+sudo pip install cython
+sudo pip install numpy
+sudo pip install autobahn
+
+cd /usr/local/Library/Formula
+curl --insecure -O https://raw.github.com/OpenKinect/libfreenect/master/platform/osx/homebrew/libfreenect.rb
+curl --insecure -O https://raw.github.com/OpenKinect/libfreenect/master/platform/osx/homebrew/libusb-freenect.rb
+brew install libfreenect
+
+cd ~/src
+wget https://github.com/OpenKinect/libfreenect/tarball/master
+tar xvzf master
+cd OpenKinect-libfreenect-bac62d0/wrappers/python
+sudo python setup.py install
