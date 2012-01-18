@@ -2,7 +2,7 @@
 (function() {
 
   window.onload = function() {
-    var animate, bgColour, camT, camZ, camZRange, camera, color, colorSet, connect, dataCallback, doCamPan, doCamZoom, down, dvp, fgColour, h, i, inputH, inputW, kvp, last, pMaterial, params, particle, particleSystem, particles, pcs, prevBytes, projector, pvs, renderer, scene, seenKeyFrame, setSize, startCamPan, stats, stopCamPan, sx, sy, updateCamPos, useEvery, v, w, wls, x, xc, y, yc, zc, _i, _j, _k, _len, _ref, _ref2;
+    var animate, bgColour, camT, camZ, camZRange, camera, color, colorSet, connect, dataCallback, doCamPan, doCamZoom, down, dvp, fgColour, h, i, inputH, inputW, kvp, last, outArrays, pMaterial, params, particle, particleSystem, particles, pcs, prevBytes, projector, pvs, renderer, scene, seenKeyFrame, setSize, startCamPan, stats, stopCamPan, sx, sy, updateCamPos, useEvery, v, w, wls, x, xc, y, yc, zc, _i, _j, _k, _len, _ref, _ref2;
     params = {
       stats: 0,
       zcolors: 0,
@@ -131,13 +131,14 @@
     zc = params.zcolors;
     pvs = particles.vertices;
     if (zc) pcs = particles.colors;
+    outArrays = [new Uint8Array(new ArrayBuffer(pvs.length)), new Uint8Array(new ArrayBuffer(pvs.length))];
     dataCallback = function(e) {
       var byte, bytes, depth, frameNo, i, inStream, outStream, pc, pv, _l, _len2;
       frameNo = new Uint8Array(e.data, 0, 1)[0];
       if (!(frameNo === 0 || seenKeyFrame)) return;
       seenKeyFrame = true;
       inStream = LZMA.wrapArrayBuffer(new Uint8Array(e.data, 1, e.data.byteLength - 1));
-      outStream = LZMA.wrapArrayBuffer(new Uint8Array(new ArrayBuffer(pvs.length)));
+      outStream = LZMA.wrapArrayBuffer(outArrays[frameNo % 2]);
       LZMA.decompress(inStream, inStream, outStream, pvs.length);
       bytes = outStream.data;
       for (i = _l = 0, _len2 = bytes.length; _l < _len2; i = ++_l) {

@@ -511,7 +511,9 @@ LZMA.decompress = function(properties, inStream, outStream, outSize){
 
 
 
-// additions: wrapping
+// === additions ===
+
+// wrapping
 
 LZMA.wrapArrayBuffer = function(arr) {
   return {
@@ -526,7 +528,7 @@ LZMA.wrapArrayBuffer = function(arr) {
   };
 };
 
-// additions: closure compiler (advanced)
+// closure compiler (advanced)
 
 this['LZMA'] = LZMA;
 LZMA['decompress'] = LZMA.decompress;

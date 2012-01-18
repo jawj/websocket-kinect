@@ -116,6 +116,7 @@ window.onload = ->
   zc  = params.zcolors
   pvs = particles.vertices
   pcs = particles.colors if zc
+  outArrays = [new Uint8Array(new ArrayBuffer(pvs.length)), new Uint8Array(new ArrayBuffer(pvs.length))]  # need 2 because one becomes prevBytes
   
   dataCallback = (e) ->
     frameNo = new Uint8Array(e.data, 0, 1)[0]
@@ -123,7 +124,7 @@ window.onload = ->
     seenKeyFrame = yes
     
     inStream  = LZMA.wrapArrayBuffer(new Uint8Array(e.data, 1, e.data.byteLength - 1))
-    outStream = LZMA.wrapArrayBuffer(new Uint8Array(new ArrayBuffer(pvs.length)))
+    outStream = LZMA.wrapArrayBuffer(outArrays[frameNo % 2])
     LZMA.decompress(inStream, inStream, outStream, pvs.length)
     bytes = outStream.data
     
