@@ -51,7 +51,7 @@ window.onload = ->
   
   projector = new THREE.Projector()
   
-  pMaterial = new THREE.ParticleBasicMaterial(color: fgColour, size: useEvery * 3, vertexColors: params.zcolors)
+  pMaterial = new THREE.ParticleBasicMaterial(color: fgColour, size: useEvery * 3, vertexColors: yes) # params.zcolors)
   particles = new THREE.Geometry()
   for y in [0...h]
     for x in [0...w]
@@ -61,7 +61,7 @@ window.onload = ->
       particle.usualY = yc
       particles.vertices.push(particle)
       color = new THREE.Color()
-      particles.colors.push(color) if params.zcolors
+      particles.colors.push(color) #if params.zcolors
   
   particleSystem = new THREE.ParticleSystem(particles, pMaterial)
   scene.add(particleSystem)
@@ -69,20 +69,18 @@ window.onload = ->
   down = no
   sx = sy = 0
   last = new Date().getTime()
-  camZRange = [1500, 0]
-  camZ = camZRange[0]
+  camZRange = [2400, 0]
+  camZ = 1200
   camT = new Transform()
   
   animate = ->
     renderer.clear()
+    [camera.position.x, camera.position.z] = camT.t(4 * ((qtr + qbr) - (qtl + qbl)), camZ)
     camera.lookAt(scene.position)
     renderer.render(scene, camera)
     window.requestAnimationFrame(animate, renderer.domElement)
     stats.update() if params.stats
     
-  updateCamPos = -> [camera.position.x, camera.position.z] = camT.t(0, camZ)
-  
-  updateCamPos()
   animate()
   
   startCamPan = (ev) ->
@@ -101,7 +99,6 @@ window.onload = ->
       dy = ev.clientY - sy
       rotation = dx * -0.0005 * Math.log(camZ)
       camT.rotate(rotation)
-      updateCamPos()
       sx += dx; sy += dy
   $(renderer.domElement).on('mousemove', doCamPan)
   
@@ -109,40 +106,73 @@ window.onload = ->
     camZ -= dY * 40
     camZ = Math.max(camZ, camZRange[1])
     camZ = Math.min(camZ, camZRange[0])
-    updateCamPos()
   $(renderer.domElement).on('mousewheel', doCamZoom)
   
-  seenKeyFrame = prevBytes = null  # scoping
-  zc  = params.zcolors
-  pvs = particles.vertices
-  pcs = particles.colors if zc
-  outArrays = [new Uint8Array(new ArrayBuffer(pvs.length)), new Uint8Array(new ArrayBuffer(pvs.length))]  # need 2 because one becomes prevBytes
+  # scoping
+  seenKeyFrame = null  
+  qtl = qtr = qbl = qbr = null
   
+  # shortcuts
+  zc   = params.zcolors
+  pvs  = particles.vertices
+  pcs  = particles.colors #if zc
+  
+  pLen = pvs.length
+  rawDataLen = 5 + 2 * pLen
+  
+  outArrays = for i in [0..1]
+    new Uint8Array(new ArrayBuffer(rawDataLen))
+  [currentOutArrayIdx, prevOutArrayIdx] = [0, 1]
+  
+  yColScaleFactor = 1.075
+  
+  xColZMin      = 60
+  xColScaleZMin = 1.0
+  xColZMax      = 255
+  xColScaleZMax = 0.935
+  xColScaleZFactor = (xColScaleZMax - xColScaleZMin) / (xColZMax - xColZMin)
+
   dataCallback = (e) ->
-    frameNo = new Uint8Array(e.data, 0, 1)[0]
-    return unless frameNo is 0 or seenKeyFrame
+    [currentOutArrayIdx, prevOutArrayIdx] = [prevOutArrayIdx, currentOutArrayIdx]
+    inStream  = LZMA.wrapArrayBuffer(new Uint8Array(e.data))
+    outStream = LZMA.wrapArrayBuffer(outArrays[currentOutArrayIdx])
+    LZMA.decompress(inStream, inStream, outStream, rawDataLen)
+    bytes = outStream.data
+    prevBytes = outArrays[prevOutArrayIdx]
+    
+    keyFrame = bytes[0]
+    return unless keyFrame or seenKeyFrame
     seenKeyFrame = yes
     
-    inStream  = LZMA.wrapArrayBuffer(new Uint8Array(e.data, 1, e.data.byteLength - 1))
-    outStream = LZMA.wrapArrayBuffer(outArrays[frameNo % 2])
-    LZMA.decompress(inStream, inStream, outStream, pvs.length)
-    bytes = outStream.data
+    [qtl, qtr, qbl, qbr] = [bytes[1], bytes[2], bytes[3], bytes[4]]
     
-    for byte, i in bytes
-      pv = pvs[i]
-      pc = pcs[i] if zc
-      bytes[i] = byte = (prevBytes[i] + byte) % 256 if frameNo > 0
-      if byte is 255
-        pv.position.y = -5000
-      else
-        pv.position.y = pv.usualY
-        depth = 128 - byte
-        pv.position.z = depth * 10
-        pc.copy(colorSet[byte]) if zc
+    pIdx    = 0
+    byteIdx = 5
+    
+    for y in [0...h]
+      for x in [0...w]
+        pv = pvs[pIdx]
+        pc = pcs[pIdx] #if zc
+        byte = bytes[byteIdx]
+        byte = bytes[byteIdx] = (prevBytes[byteIdx] + byte) % 256 unless keyFrame
+        if byte is 255
+          pv.position.y = -5000  # out of sight
+        else
+          pv.position.y = pv.usualY
+          depth = 128 - byte
+          pv.position.z = depth * 10
+          
+          deltaColY =  y - Math.round(h - yColScaleFactor * (h - y))
+          deltaColX = -x + Math.round((xColScaleZMin + byte * xColScaleZFactor) * x)
+          console.log(deltaColX) if y is 60 and x is 80 and keyFrame
+          
+          pc.r = pc.g = pc.b = bytes[byteIdx + pLen + (w * deltaColY) + deltaColX] / 255
+          pc.copy(colorSet[byte]) if zc
+        pIdx    += 1
+        byteIdx += 1
       
-    prevBytes = bytes
     particleSystem.geometry.__dirtyVertices = yes
-    particleSystem.geometry.__dirtyColors   = yes if zc
+    particleSystem.geometry.__dirtyColors   = yes #if zc
     
   connect = ->
     url = 'ws://128.40.47.71:9000'

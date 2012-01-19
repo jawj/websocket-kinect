@@ -24,13 +24,15 @@ class BroadcastServerFactory(WebSocketServerFactory):
   def __init__(self, url):
     WebSocketServerFactory.__init__(self, url)
     self.clients = []
+    self.tickSetup()
+    
+  def tickSetup(self):
     self.dataSent = 0
-    self.tick()
+    reactor.callLater(1, self.tick)
   
   def tick(self):
     print '%d bytes/sec' % self.dataSent
-    self.dataSent = 0
-    reactor.callLater(1, self.tick)
+    self.tickSetup()
   
   def register(self, client):
     if not client in self.clients:
@@ -51,36 +53,68 @@ class Kinect:
   
   def __init__(self):
     useEvery = 4
-    h = 480 / useEvery
-    w = 640 / useEvery
-    self.useCols, self.useRows = numpy.indices((h, w))
+    self.h = 480 / useEvery
+    self.w = 640 / useEvery
+    self.useCols, self.useRows = numpy.indices((self.h, self.w))
     self.useCols *= useEvery
     self.useRows *= useEvery
     
     self.keyFrameEvery = 30
     self.currentFrame = 0
+    
+    self.rgb = None
   
   def depthCallback(self, dev, depth, timestamp):
+    if self.rgb == None: return
+    
+    # === depths
+    
+    # resize grid
     depth = depth[self.useCols, self.useRows]
+    
+    # rescale depths
     numpy.clip(depth, 0, 2 ** 10 - 1, depth)
     depth >>= 2
     
-    diffDepth = depth if self.currentFrame == 0 else (depth - self.lastFrame) % 256
-    data = diffDepth.astype(numpy.uint8)
-    crunchedData = chr(self.currentFrame) + pylzma.compress(data, dictionary = 19)  # default dict: 23 -> 2 ** 23 -> 8MB
+    # calculate quadrant averages
+    h, w = self.h, self.w
+    halfH, halfW = h / 2, w / 2
+    qtl = numpy.mean(depth[0:halfH, 0:halfW])
+    qtr = numpy.mean(depth[0:halfH, halfW:w])
+    qbl = numpy.mean(depth[halfH:h, 0:halfW])
+    qbr = numpy.mean(depth[halfH:h, halfW:w])
+    
+    # calculate diff from last frame (unless it's a keyframe)
+    keyFrame = self.currentFrame == 0
+    diffDepth = depth if keyFrame else (depth - self.lastDepth) % 256
+    
+    # === rgb
+    rgb = self.rgb[self.useCols, self.useRows]
+    lightness = numpy.mean(rgb, axis = 2)
+    
+    # print lightness.ravel().astype(numpy.uint8)
+    
+    # smush data together
+    data = numpy.concatenate(([keyFrame, qtl, qtr, qbl, qbr], diffDepth.ravel(), lightness.ravel()))
+    
+    # compress and broadcast
+    crunchedData = pylzma.compress(data.astype(numpy.uint8), dictionary = 16)  # default dict: 23 -> 2 ** 23 -> 8MB
     reactor.callFromThread(factory.broadcast, crunchedData, True)
     
-    self.lastFrame = depth
+    # setup for next frame
+    self.lastDepth = depth
     self.currentFrame += 1
-    if self.currentFrame == self.keyFrameEvery:
-      self.currentFrame = 0
-    
+    self.currentFrame %= self.keyFrameEvery
+  
+  def rgbCallback(self, dev, rgb, timestamp):
+    self.rgb = rgb
+  
   def bodyCallback(self, *args):
     if not self.kinecting: raise freenect.Kill
   
   def run(self):
     self.kinecting = True
-    reactor.callInThread(freenect.runloop, depth = self.depthCallback, body = self.bodyCallback, video = None)
+    reactor.callInThread(freenect.runloop, depth = self.depthCallback, video = self.rgbCallback, body = self.bodyCallback)
   
   def stop(self):
     self.kinecting = False
