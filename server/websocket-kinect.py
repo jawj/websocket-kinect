@@ -1,12 +1,8 @@
 #!/usr/bin/env python
 
-import sys
+import sys, signal, numpy, freenect, pylzma
 from twisted.internet import reactor, threads
 from autobahn.websocket import WebSocketServerFactory, WebSocketServerProtocol, listenWS
-import freenect
-import signal
-import numpy
-import pylzma
 
 class BroadcastServerProtocol(WebSocketServerProtocol):
   
@@ -61,14 +57,8 @@ class Kinect:
     
     self.keyFrameEvery = 30
     self.currentFrame = 0
-    
-    self.rgb = None
   
   def depthCallback(self, dev, depth, timestamp):
-    if self.rgb == None: return
-    
-    # === depths
-    
     # resize grid
     depth = depth[self.useCols, self.useRows]
     
@@ -87,18 +77,12 @@ class Kinect:
     # calculate diff from last frame (unless it's a keyframe)
     keyFrame = self.currentFrame == 0
     diffDepth = depth if keyFrame else (depth - self.lastDepth) % 256
-    
-    # === rgb
-    rgb = self.rgb[self.useCols, self.useRows]
-    lightness = numpy.mean(rgb, axis = 2)
-    
-    # print lightness.ravel().astype(numpy.uint8)
-    
+
     # smush data together
-    data = numpy.concatenate(([keyFrame, qtl, qtr, qbl, qbr], diffDepth.ravel(), lightness.ravel()))
+    data = numpy.concatenate(([keyFrame, qtl, qtr, qbl, qbr], diffDepth.ravel()))
     
     # compress and broadcast
-    crunchedData = pylzma.compress(data.astype(numpy.uint8), dictionary = 16)  # default dict: 23 -> 2 ** 23 -> 8MB
+    crunchedData = pylzma.compress(data.astype(numpy.uint8), dictionary = 20)  # default dict: 23 -> 2 ** 23 -> 8MB
     reactor.callFromThread(factory.broadcast, crunchedData, True)
     
     # setup for next frame
@@ -106,15 +90,12 @@ class Kinect:
     self.currentFrame += 1
     self.currentFrame %= self.keyFrameEvery
   
-  def rgbCallback(self, dev, rgb, timestamp):
-    self.rgb = rgb
-  
   def bodyCallback(self, *args):
     if not self.kinecting: raise freenect.Kill
   
   def run(self):
     self.kinecting = True
-    reactor.callInThread(freenect.runloop, depth = self.depthCallback, video = self.rgbCallback, body = self.bodyCallback)
+    reactor.callInThread(freenect.runloop, depth = self.depthCallback, body = self.bodyCallback)
   
   def stop(self):
     self.kinecting = False

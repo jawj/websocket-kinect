@@ -2,10 +2,9 @@
 (function() {
 
   window.onload = function() {
-    var animate, bgColour, camT, camZ, camZRange, camera, color, colorSet, connect, currentOutArrayIdx, dataCallback, doCamPan, doCamZoom, down, dvp, fgColour, h, i, inputH, inputW, kvp, last, outArrays, pLen, pMaterial, params, particle, particleSystem, particles, pcs, prevOutArrayIdx, projector, pvs, qbl, qbr, qtl, qtr, rawDataLen, renderer, scene, seenKeyFrame, setSize, startCamPan, stats, stopCamPan, sx, sy, useEvery, v, w, wls, x, xColScaleZFactor, xColScaleZMax, xColScaleZMin, xColZMax, xColZMin, xc, y, yColScaleFactor, yc, zc, _i, _j, _k, _len, _ref, _ref2, _ref3;
+    var animate, bgColour, camT, camZ, camZRange, camera, colorSet, connect, currentOutArrayIdx, dataCallback, doCamPan, doCamZoom, down, dvp, fgColour, h, i, inputH, inputW, kvp, last, outArrays, pLen, pMaterial, params, particle, particleSystem, particles, prevOutArrayIdx, projector, pvs, qbl, qbr, qtl, qtr, rawDataLen, renderer, scene, seenKeyFrame, setSize, startCamPan, stats, stopCamPan, sx, sy, useEvery, v, w, wls, x, xc, y, yc, _i, _j, _k, _len, _ref, _ref2, _ref3;
     params = {
       stats: 0,
-      zcolors: 0,
       fog: 1
     };
     wls = window.location.search;
@@ -62,7 +61,7 @@
     pMaterial = new THREE.ParticleBasicMaterial({
       color: fgColour,
       size: useEvery * 3,
-      vertexColors: true
+      vertexColors: false
     });
     particles = new THREE.Geometry();
     for (y = _j = 0; 0 <= h ? _j < h : _j > h; y = 0 <= h ? ++_j : --_j) {
@@ -72,8 +71,6 @@
         particle = v(xc, yc, 0);
         particle.usualY = yc;
         particles.vertices.push(particle);
-        color = new THREE.Color();
-        particles.colors.push(color);
       }
     }
     particleSystem = new THREE.ParticleSystem(particles, pMaterial);
@@ -81,13 +78,13 @@
     down = false;
     sx = sy = 0;
     last = new Date().getTime();
-    camZRange = [2400, 0];
-    camZ = 1200;
+    camZRange = [2000, 0];
+    camZ = 1000;
     camT = new Transform();
     animate = function() {
       var _ref3;
       renderer.clear();
-      _ref3 = camT.t(4 * ((qtr + qbr) - (qtl + qbl)), camZ), camera.position.x = _ref3[0], camera.position.z = _ref3[1];
+      _ref3 = camT.t(0.01 * camZ * ((qtr + qbr) - (qtl + qbl)), camZ), camera.position.x = _ref3[0], camera.position.z = _ref3[1];
       camera.lookAt(scene.position);
       renderer.render(scene, camera);
       window.requestAnimationFrame(animate, renderer.domElement);
@@ -124,11 +121,9 @@
     $(renderer.domElement).on('mousewheel', doCamZoom);
     seenKeyFrame = null;
     qtl = qtr = qbl = qbr = null;
-    zc = params.zcolors;
     pvs = particles.vertices;
-    pcs = particles.colors;
     pLen = pvs.length;
-    rawDataLen = 5 + 2 * pLen;
+    rawDataLen = 5 + pLen;
     outArrays = (function() {
       var _l, _results;
       _results = [];
@@ -138,14 +133,8 @@
       return _results;
     })();
     _ref3 = [0, 1], currentOutArrayIdx = _ref3[0], prevOutArrayIdx = _ref3[1];
-    yColScaleFactor = 1.075;
-    xColZMin = 60;
-    xColScaleZMin = 1.0;
-    xColZMax = 255;
-    xColScaleZMax = 0.935;
-    xColScaleZFactor = (xColScaleZMax - xColScaleZMin) / (xColZMax - xColZMin);
     dataCallback = function(e) {
-      var byte, byteIdx, bytes, deltaColX, deltaColY, depth, inStream, keyFrame, outStream, pIdx, pc, prevBytes, pv, x, y, _l, _m, _ref4, _ref5;
+      var byte, byteIdx, bytes, depth, inStream, keyFrame, outStream, pIdx, prevBytes, pv, x, y, _l, _m, _ref4, _ref5;
       _ref4 = [prevOutArrayIdx, currentOutArrayIdx], currentOutArrayIdx = _ref4[0], prevOutArrayIdx = _ref4[1];
       inStream = LZMA.wrapArrayBuffer(new Uint8Array(e.data));
       outStream = LZMA.wrapArrayBuffer(outArrays[currentOutArrayIdx]);
@@ -161,7 +150,6 @@
       for (y = _l = 0; 0 <= h ? _l < h : _l > h; y = 0 <= h ? ++_l : --_l) {
         for (x = _m = 0; 0 <= w ? _m < w : _m > w; x = 0 <= w ? ++_m : --_m) {
           pv = pvs[pIdx];
-          pc = pcs[pIdx];
           byte = bytes[byteIdx];
           if (!keyFrame) byte = bytes[byteIdx] = (prevBytes[byteIdx] + byte) % 256;
           if (byte === 255) {
@@ -170,18 +158,12 @@
             pv.position.y = pv.usualY;
             depth = 128 - byte;
             pv.position.z = depth * 10;
-            deltaColY = y - Math.round(h - yColScaleFactor * (h - y));
-            deltaColX = -x + Math.round((xColScaleZMin + byte * xColScaleZFactor) * x);
-            if (y === 60 && x === 80 && keyFrame) console.log(deltaColX);
-            pc.r = pc.g = pc.b = bytes[byteIdx + pLen + (w * deltaColY) + deltaColX] / 255;
-            if (zc) pc.copy(colorSet[byte]);
           }
           pIdx += 1;
           byteIdx += 1;
         }
       }
-      particleSystem.geometry.__dirtyVertices = true;
-      return particleSystem.geometry.__dirtyColors = true;
+      return particleSystem.geometry.__dirtyVertices = true;
     };
     connect = function() {
       var reconnectDelay, url, ws;

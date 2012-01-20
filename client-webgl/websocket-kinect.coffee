@@ -3,7 +3,6 @@ window.onload = ->
   
   params = 
     stats:   0
-    zcolors: 0
     fog:     1
   wls = window.location.search
   (params[kvp.split('=')[0]] = parseInt(kvp.split('=')[1])) for kvp in wls.substring(1).split('&')
@@ -51,7 +50,7 @@ window.onload = ->
   
   projector = new THREE.Projector()
   
-  pMaterial = new THREE.ParticleBasicMaterial(color: fgColour, size: useEvery * 3, vertexColors: yes) # params.zcolors)
+  pMaterial = new THREE.ParticleBasicMaterial(color: fgColour, size: useEvery * 3, vertexColors: no)
   particles = new THREE.Geometry()
   for y in [0...h]
     for x in [0...w]
@@ -60,8 +59,6 @@ window.onload = ->
       particle = v(xc, yc, 0)
       particle.usualY = yc
       particles.vertices.push(particle)
-      color = new THREE.Color()
-      particles.colors.push(color) #if params.zcolors
   
   particleSystem = new THREE.ParticleSystem(particles, pMaterial)
   scene.add(particleSystem)
@@ -69,13 +66,13 @@ window.onload = ->
   down = no
   sx = sy = 0
   last = new Date().getTime()
-  camZRange = [2400, 0]
-  camZ = 1200
+  camZRange = [2000, 0]
+  camZ = 1000
   camT = new Transform()
   
   animate = ->
     renderer.clear()
-    [camera.position.x, camera.position.z] = camT.t(4 * ((qtr + qbr) - (qtl + qbl)), camZ)
+    [camera.position.x, camera.position.z] = camT.t(0.01 * camZ * ((qtr + qbr) - (qtl + qbl)), camZ)
     camera.lookAt(scene.position)
     renderer.render(scene, camera)
     window.requestAnimationFrame(animate, renderer.domElement)
@@ -112,25 +109,13 @@ window.onload = ->
   seenKeyFrame = null  
   qtl = qtr = qbl = qbr = null
   
-  # shortcuts
-  zc   = params.zcolors
   pvs  = particles.vertices
-  pcs  = particles.colors #if zc
-  
   pLen = pvs.length
-  rawDataLen = 5 + 2 * pLen
+  rawDataLen = 5 + pLen
   
   outArrays = for i in [0..1]
     new Uint8Array(new ArrayBuffer(rawDataLen))
   [currentOutArrayIdx, prevOutArrayIdx] = [0, 1]
-  
-  yColScaleFactor = 1.075
-  
-  xColZMin      = 60
-  xColScaleZMin = 1.0
-  xColZMax      = 255
-  xColScaleZMax = 0.935
-  xColScaleZFactor = (xColScaleZMax - xColScaleZMin) / (xColZMax - xColZMin)
 
   dataCallback = (e) ->
     [currentOutArrayIdx, prevOutArrayIdx] = [prevOutArrayIdx, currentOutArrayIdx]
@@ -152,27 +137,18 @@ window.onload = ->
     for y in [0...h]
       for x in [0...w]
         pv = pvs[pIdx]
-        pc = pcs[pIdx] #if zc
         byte = bytes[byteIdx]
         byte = bytes[byteIdx] = (prevBytes[byteIdx] + byte) % 256 unless keyFrame
         if byte is 255
-          pv.position.y = -5000  # out of sight
+          pv.position.y = -5000  # = out of sight
         else
           pv.position.y = pv.usualY
           depth = 128 - byte
           pv.position.z = depth * 10
-          
-          deltaColY =  y - Math.round(h - yColScaleFactor * (h - y))
-          deltaColX = -x + Math.round((xColScaleZMin + byte * xColScaleZFactor) * x)
-          console.log(deltaColX) if y is 60 and x is 80 and keyFrame
-          
-          pc.r = pc.g = pc.b = bytes[byteIdx + pLen + (w * deltaColY) + deltaColX] / 255
-          pc.copy(colorSet[byte]) if zc
         pIdx    += 1
         byteIdx += 1
-      
+        
     particleSystem.geometry.__dirtyVertices = yes
-    particleSystem.geometry.__dirtyColors   = yes #if zc
     
   connect = ->
     url = 'ws://128.40.47.71:9000'
