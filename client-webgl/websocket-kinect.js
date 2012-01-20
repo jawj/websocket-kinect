@@ -134,7 +134,7 @@
     })();
     _ref3 = [0, 1], currentOutArrayIdx = _ref3[0], prevOutArrayIdx = _ref3[1];
     dataCallback = function(e) {
-      var byte, byteIdx, bytes, depth, inStream, keyFrame, outStream, pIdx, prevBytes, pv, x, y, _l, _m, _ref4, _ref5;
+      var aByte, byteIdx, bytes, depth, inStream, keyFrame, outStream, pIdx, prevBytes, pv, x, y, _l, _m, _ref4, _ref5;
       _ref4 = [prevOutArrayIdx, currentOutArrayIdx], currentOutArrayIdx = _ref4[0], prevOutArrayIdx = _ref4[1];
       inStream = LZMA.wrapArrayBuffer(new Uint8Array(e.data));
       outStream = LZMA.wrapArrayBuffer(outArrays[currentOutArrayIdx]);
@@ -150,13 +150,15 @@
       for (y = _l = 0; 0 <= h ? _l < h : _l > h; y = 0 <= h ? ++_l : --_l) {
         for (x = _m = 0; 0 <= w ? _m < w : _m > w; x = 0 <= w ? ++_m : --_m) {
           pv = pvs[pIdx];
-          byte = bytes[byteIdx];
-          if (!keyFrame) byte = bytes[byteIdx] = (prevBytes[byteIdx] + byte) % 256;
-          if (byte === 255) {
+          aByte = bytes[byteIdx];
+          if (!keyFrame) {
+            aByte = bytes[byteIdx] = (prevBytes[byteIdx] + aByte) % 256;
+          }
+          if (aByte === 255) {
             pv.position.y = -5000;
           } else {
             pv.position.y = pv.usualY;
-            depth = 128 - byte;
+            depth = 128 - aByte;
             pv.position.z = depth * 10;
           }
           pIdx += 1;

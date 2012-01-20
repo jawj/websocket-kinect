@@ -137,13 +137,13 @@ window.onload = ->
     for y in [0...h]
       for x in [0...w]
         pv = pvs[pIdx]
-        byte = bytes[byteIdx]
-        byte = bytes[byteIdx] = (prevBytes[byteIdx] + byte) % 256 unless keyFrame
-        if byte is 255
+        aByte = bytes[byteIdx]
+        aByte = bytes[byteIdx] = (prevBytes[byteIdx] + aByte) % 256 unless keyFrame
+        if aByte is 255
           pv.position.y = -5000  # = out of sight
         else
           pv.position.y = pv.usualY
-          depth = 128 - byte
+          depth = 128 - aByte
           pv.position.z = depth * 10
         pIdx    += 1
         byteIdx += 1
