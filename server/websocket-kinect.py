@@ -2,7 +2,47 @@
 
 import sys, signal, numpy, freenect, pylzma
 from twisted.internet import reactor, threads
-from autobahn.websocket import WebSocketServerFactory, WebSocketServerProtocol, listenWS
+from autobahn.websocket import WebSocketServerFactory, WebSocketServerProtocol, listenWS, WebSocketClientFactory, WebSocketClientProtocol, connectWS
+
+
+class SendClientProtocol(WebSocketClientProtocol):
+
+  def onOpen(self):
+    self.factory.register(self)
+    
+  def connectionLost(self, reason):
+    WebSocketClientProtocol.connectionLost(self, reason)
+    self.factory.unregister(self)
+    
+class SendClientFactory(WebSocketClientFactory):
+  
+  protocol = SendClientProtocol
+
+  def __init__(self, url):
+    WebSocketClientFactory.__init__(self, url)
+    self.protocolInstance = None
+    self.tickSetup()
+
+  def tickSetup(self):
+    self.dataSent = 0
+    reactor.callLater(1, self.tick)
+
+  def tick(self):
+    print 'sent: %d bytes/sec' % self.dataSent
+    self.tickSetup()
+
+  def register(self, protocolInstance):
+    self.protocolInstance = protocolInstance
+    
+  def unregister(self, protocolInstance):
+    self.protocolInstance = None
+  
+  def broadcast(self, msg, binary):
+    self.dataSent += len(msg)
+    if self.protocolInstance == None:
+      return
+    self.protocolInstance.sendMessage(msg, binary)
+
 
 class BroadcastServerProtocol(WebSocketServerProtocol):
   
@@ -27,7 +67,7 @@ class BroadcastServerFactory(WebSocketServerFactory):
     reactor.callLater(1, self.tick)
   
   def tick(self):
-    print '%d bytes/sec' % self.dataSent
+    print 'broadcast: %d bytes/sec' % self.dataSent
     self.tickSetup()
   
   def register(self, client):
@@ -44,6 +84,7 @@ class BroadcastServerFactory(WebSocketServerFactory):
     self.dataSent += len(msg)
     for c in self.clients:
       c.sendMessage(msg, binary)
+
 
 class Kinect:
   
@@ -100,19 +141,25 @@ class Kinect:
   def stop(self):
     self.kinecting = False
 
+
 def signalHandler(signum, frame):
   kinect.stop()
   reactor.stop()
 
-port = sys.argv[1] if len(sys.argv) > 1 else "9000"
-url = "ws://localhost:" + port
+func = sys.argv[1] if len(sys.argv) > 1 else 'server'
+url  = sys.argv[2] if len(sys.argv) > 2 else 'ws://localhost:9000'
 
 signal.signal(signal.SIGINT, signalHandler)
-print '>>> Broadcasting at %s --- Press Ctrl-C to stop <<<' % url
+print '>>> %s --- Press Ctrl-C to stop <<<' % url
 
 kinect = Kinect()
 kinect.run()
-factory = BroadcastServerFactory(url)
-listenWS(factory)
+
+if func == 'server':
+  factory = BroadcastServerFactory(url)
+  listenWS(factory)
+else:
+  factory = SendClientFactory(url)
+  connectWS(factory)
 
 reactor.run()
