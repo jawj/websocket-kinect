@@ -1,11 +1,18 @@
 
-window.onload = ->
+$ ->
+  unless window.WebGLRenderingContext and document.createElement('canvas').getContext('experimental-webgl') and window.WebSocket and new WebSocket('ws://.').binaryType
+    # no point testing for plain 'webgl' context, because Three.js doesn't
+    $('#noWebGL').show()
+    return
   
   params = 
     stats:   0
     fog:     1
+    credits: 1
   wls = window.location.search
   (params[kvp.split('=')[0]] = parseInt(kvp.split('=')[1])) for kvp in wls.substring(1).split('&')
+  
+  $('#creditOuter').show() if params.credits
   
   if params.stats
     stats = new Stats()
@@ -14,9 +21,6 @@ window.onload = ->
   
   bgColour = 0x000000
   fgColour = 0xffffff
-  
-  colorSet = for i in [0..255]
-    new THREE.Color().setHSV(i / 255, 1, 1)
 
   inputW = 640
   inputH = 480
@@ -50,7 +54,7 @@ window.onload = ->
   
   projector = new THREE.Projector()
   
-  pMaterial = new THREE.ParticleBasicMaterial(color: fgColour, size: useEvery * 3, vertexColors: no)
+  pMaterial = new THREE.ParticleBasicMaterial(color: fgColour, size: useEvery * 3)
   particles = new THREE.Geometry()
   for y in [0...h]
     for x in [0...w]
@@ -64,15 +68,16 @@ window.onload = ->
   scene.add(particleSystem)
   
   down = no
-  sx = sy = 0
-  last = new Date().getTime()
+  sx = 0
   camZRange = [2000, 0]
   camZ = 1000
   camT = new Transform()
+  mouseY = window.innerHeight / 2
   
   animate = ->
     renderer.clear()
     [camera.position.x, camera.position.z] = camT.t(0.01 * camZ * ((qtr + qbr) - (qtl + qbl)), camZ)
+    camera.position.y = mouseY - window.innerHeight / 2
     camera.lookAt(scene.position)
     renderer.render(scene, camera)
     window.requestAnimationFrame(animate, renderer.domElement)
@@ -91,12 +96,12 @@ window.onload = ->
   $(renderer.domElement).on('mouseup', stopCamPan)
 
   doCamPan = (ev) ->
+    mouseY = ev.clientY
     if down
       dx = ev.clientX - sx
-      dy = ev.clientY - sy
       rotation = dx * -0.0005 * Math.log(camZ)
       camT.rotate(rotation)
-      sx += dx; sy += dy
+      sx += dx
   $(renderer.domElement).on('mousemove', doCamPan)
   
   doCamZoom = (ev, d, dX, dY) ->

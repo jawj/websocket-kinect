@@ -1,21 +1,51 @@
 <!DOCTYPE html>
 <html>
 <head>
-  <style>
-    * { -webkit-user-select: none; -moz-user-select: none; user-select: none; -webkit-tap-highlight-color: rgba(0, 0, 0, 0); -webkit-text-size-adjust: none; }
-    html, body { margin: 0; padding: 0; border: 0; overflow: hidden; width: 100%; height: 100%; background: #000; }
-    #stats { position: absolute; bottom: 0; }
-  </style>
-  <title>kinect</title>
-  <script src="js.libs/jquery.min.js"></script>
-  <script src="js.libs/jquery.mousewheel.js"></script>
-  <script src="js.libs/transform.js"></script>
-  <script src="js.libs/raf.js"></script>
-  <script src="js.libs/Stats.min.js"></script>
-  <script src="js.libs/ThreeWebGL.min.js"></script>
-  <script src="js.libs/lzma.min.js"></script>
-  <script src="websocket-kinect.js"></script>
+<meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+<!--
+***
+
+hi there, view-sourcerer
+
+everything's in this file, but inlined and uglified.
+to make sense of the source see https://github.com/jawj/websocket-kinect
+
+***
+-->
+<style>
+* { -webkit-user-select: none; -moz-user-select: none; user-select: none; -webkit-tap-highlight-color: rgba(0, 0, 0, 0); -webkit-text-size-adjust: none; }
+html, body { margin: 0; padding: 0; border: 0; overflow: hidden; width: 100%; height: 100%; background: #002; }
+#stats, #creditOuter { position: absolute; bottom: 0; }
+#creditOuter, #noWebGL { display: none; }
+#creditInner, #noWebGL { padding: 5px 10px; font-family: Helvetica; color: #fff; }
+#creditOuter { width: 100%; }
+#creditInner { text-align: right; font-size: 10px; }
+#noWebGL { font-size: 30px; width: 50%; }
+a { color: #fff; }
+</style>
+<title>webkinect</title>
+<script src="js.libs/jquery.min.js"></script>
+<script src="js.libs/jquery.mousewheel.js"></script>
+<script src="js.libs/transform.js"></script>
+<script src="js.libs/raf.js"></script>
+<script src="js.libs/Stats.min.js"></script>
+<script src="js.libs/ThreeWebGL.min.js"></script>
+<script src="js.libs/lzma.min.js"></script>
+<script src="websocket-kinect.js"></script>
 </head>
 <body>
+<div id="noWebGL">
+  for this you need: (1) a recent, decent Mac or PC
+  and (2) <a href="http://google.com/chrome">Google Chrome</a> (or other web browser with WebGL and binary WebSockets)
+</div>
+<div id="creditOuter"><div id="creditInner">
+  responds to:
+    <b>click + drag</b> 
+  — <b>scroll-wheel</b>
+  — <b>pointer position</b>
+  — made by: 
+  <a href="http://mackerron.com">George MacKerron</a> 
+  of <a href="http://casa.ucl.ac.uk">CASA</a>
+</div></div>
 </body>
 </html>
