@@ -28,7 +28,7 @@ class SendClientFactory(WebSocketClientFactory):
     reactor.callLater(1, self.tick)
 
   def tick(self):
-    print 'sent: %d bytes/sec' % self.dataSent
+    print 'sent: %d KB/sec' % (self.dataSent >> 10)
     self.tickSetup()
 
   def register(self, protocolInstance):
@@ -67,7 +67,7 @@ class BroadcastServerFactory(WebSocketServerFactory):
     reactor.callLater(1, self.tick)
   
   def tick(self):
-    print 'broadcast: %d bytes/sec' % self.dataSent
+    print 'broadcast: %d KB/sec' % (self.dataSent >> 10)
     self.tickSetup()
   
   def register(self, client):
@@ -95,9 +95,10 @@ class Kinect:
     self.useCols, self.useRows = numpy.indices((self.h, self.w))
     self.useCols *= useEvery
     self.useRows *= useEvery
+    self.currentFrame = 0
     
     self.keyFrameEvery = 30
-    self.currentFrame = 0
+    self.pixelDiffs = False  # oddly, pixel diffing seems to *increase* comrpessed data size
   
   def depthCallback(self, dev, depth, timestamp):
     # resize grid
@@ -115,15 +116,21 @@ class Kinect:
     qbl = numpy.mean(depth[halfH:h, 0:halfW])
     qbr = numpy.mean(depth[halfH:h, halfW:w])
     
+    depth = depth.ravel()  # 1-D version
+    
     # calculate diff from last frame (unless it's a keyframe)
     keyFrame = self.currentFrame == 0
-    diffDepth = depth if keyFrame else (depth - self.lastDepth) % 256
-
+    diffDepth = depth if keyFrame else depth - self.lastDepth
+    
+    # calculate pixel diffs, if required
+    if self.pixelDiffs:
+      diffDepth = numpy.concatenate(([diffDepth[0]], numpy.diff(diffDepth)))
+   
     # smush data together
-    data = numpy.concatenate(([keyFrame, qtl, qtr, qbl, qbr], diffDepth.ravel()))
+    data = numpy.concatenate(([keyFrame, qtl, qtr, qbl, qbr], diffDepth % 256))
     
     # compress and broadcast
-    crunchedData = pylzma.compress(data.astype(numpy.uint8), dictionary = 20)  # default dict: 23 -> 2 ** 23 -> 8MB
+    crunchedData = pylzma.compress(data.astype(numpy.uint8), dictionary = 20)  # 20 -> 2 ** 20 -> 1MB; default: 23 -> 2 ** 23 -> 8MB
     reactor.callFromThread(factory.broadcast, crunchedData, True)
     
     # setup for next frame
