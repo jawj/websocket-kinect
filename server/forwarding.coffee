@@ -1,6 +1,7 @@
 #!/usr/bin/env coffee
 
-sendingAddress = process.argv[2]  # first argument -- e.g. '127.0.0.1'
+sendingAddress = process.argv[2]  # first argument  -- e.g. '127.0.0.1'
+port = process.argv[3]            # second argument -- e.g. 10000
 
 WebSocketServer = require('websocket').server
 http = require('http')
@@ -8,7 +9,7 @@ http = require('http')
 hServer = http.createServer (request, response) ->
   response.writeHead(404)
   response.end()
-hServer.listen(10000)
+hServer.listen(parseInt(wsPort))
 
 wsServer = new WebSocketServer(httpServer: hServer, autoAcceptConnections: false)
 wsServer.on 'request', (request) ->
