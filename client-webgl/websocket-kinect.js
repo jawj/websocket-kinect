@@ -1,7 +1,7 @@
 (function() {
 
   $(function() {
-    var animate, bgColour, camT, camYRange, camZ, camZRange, camera, connect, currentOutArrayIdx, dataCallback, doCamPan, doCamZoom, down, dvp, fgColour, h, i, inputH, inputW, k, kvp, outArrays, pLen, pMaterial, params, particle, particleSystem, particles, prevOutArrayIdx, projector, pvs, qbl, qbr, qtl, qtr, rawDataLen, renderer, scene, seenKeyFrame, setSize, startCamPan, stats, stopCamPan, sx, sy, useEvery, v, w, wls, x, xc, y, yc, _i, _len, _ref, _ref2, _ref3, _ref4;
+    var animate, bgColour, camT, camYRange, camZ, camZRange, camera, connect, currentOutArrayIdx, dataCallback, doCamPan, doCamZoom, down, dvp, dynaPan, fgColour, h, i, inputH, inputW, k, kvp, outArrays, pLen, pMaterial, params, particle, particleSystem, particles, prevOutArrayIdx, projector, pvs, qbl, qbr, qtl, qtr, rawDataLen, renderer, scene, seenKeyFrame, setSize, startCamPan, stats, stopCamPan, sx, sy, useEvery, v, w, wls, x, xc, y, yc, _i, _len, _ref, _ref2, _ref3, _ref4;
     if (!(window.WebGLRenderingContext && document.createElement('canvas').getContext('experimental-webgl') && window.WebSocket && new WebSocket('ws://.').binaryType)) {
       $('#noWebGL').show();
       return;
@@ -74,6 +74,7 @@
     particleSystem = new THREE.ParticleSystem(particles, pMaterial);
     scene.add(particleSystem);
     down = false;
+    dynaPan = 0;
     sx = sy = 0;
     camZRange = [2000, 200];
     camZ = 1000;
@@ -82,7 +83,7 @@
     animate = function() {
       var _ref4;
       renderer.clear();
-      _ref4 = camT.t(0.01 * camZ * ((qtr + qbr) - (qtl + qbl)), camZ), camera.position.x = _ref4[0], camera.position.z = _ref4[1];
+      _ref4 = camT.t(0.01 * camZ * dynaPan, camZ), camera.position.x = _ref4[0], camera.position.z = _ref4[1];
       camera.lookAt(scene.position);
       renderer.render(scene, camera);
       window.requestAnimationFrame(animate, renderer.domElement);
@@ -148,6 +149,7 @@
       if (!(keyFrame || seenKeyFrame)) return;
       seenKeyFrame = true;
       _ref6 = [bytes[1], bytes[2], bytes[3], bytes[4]], qtl = _ref6[0], qtr = _ref6[1], qbl = _ref6[2], qbr = _ref6[3];
+      dynaPan = dynaPan * 0.9 + ((qtr + qbr) - (qtl + qbl)) * 0.1;
       pIdx = 0;
       byteIdx = 5;
       for (y = 0; 0 <= h ? y < h : y > h; 0 <= h ? y++ : y--) {

@@ -70,6 +70,7 @@ $ ->
   scene.add(particleSystem)
   
   down = no
+  dynaPan = 0
   sx = sy = 0
   camZRange = [2000, 200]
   camZ = 1000
@@ -78,7 +79,7 @@ $ ->
   
   animate = ->
     renderer.clear()
-    [camera.position.x, camera.position.z] = camT.t(0.01 * camZ * ((qtr + qbr) - (qtl + qbl)), camZ)
+    [camera.position.x, camera.position.z] = camT.t(0.01 * camZ * dynaPan, camZ)
     camera.lookAt(scene.position)
     renderer.render(scene, camera)
     window.requestAnimationFrame(animate, renderer.domElement)
@@ -142,6 +143,7 @@ $ ->
     seenKeyFrame = yes
     
     [qtl, qtr, qbl, qbr] = [bytes[1], bytes[2], bytes[3], bytes[4]]
+    dynaPan = dynaPan * 0.9 + ((qtr + qbr) - (qtl + qbl)) * 0.1
     
     pIdx    = 0
     byteIdx = 5
