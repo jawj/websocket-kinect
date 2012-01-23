@@ -1,16 +1,19 @@
 #!/usr/bin/env python
 
 import sys, signal, numpy, freenect, pylzma
-from twisted.internet import reactor, threads
+from twisted.internet import reactor, threads, ssl
+from twisted.web.client import WebClientContextFactory
 from autobahn.websocket import WebSocketServerFactory, WebSocketServerProtocol, listenWS, WebSocketClientFactory, WebSocketClientProtocol, connectWS
 
 
 class SendClientProtocol(WebSocketClientProtocol):
 
   def onOpen(self):
+    print 'connection opened'
     self.factory.register(self)
     
   def connectionLost(self, reason):
+    print 'connection lost'
     WebSocketClientProtocol.connectionLost(self, reason)
     self.factory.unregister(self)
     
@@ -169,6 +172,7 @@ if func == 'server':
   listenWS(factory)
 else:
   factory = SendClientFactory(url)
-  connectWS(factory)
+  contextFactory = ssl.ClientContextFactory()
+  connectWS(factory, contextFactory)
 
 reactor.run()
