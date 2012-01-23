@@ -14,8 +14,10 @@ hServer.listen(port)
 wsServer = new WebSocketServer(httpServer: hServer, autoAcceptConnections: false)
 wsServer.on 'request', (request) ->
   connection = request.accept(null, request.origin)
+  console.log "clients: #{wsServer.connections.length}"
   if connection.remoteAddress is sendingAddress
     connection.on 'message', (message) ->
       for c in wsServer.connections
-        continue if c is connection
-        c.sendBytes(message.binaryData) if c.socket.bufferSize is 0  # minimal buffering for slow connections
+        continue if c is connection               # don't send back to the sender
+        continue unless c.socket.bufferSize is 0  # minimal buffering for slow connections
+        c.sendBytes(message.binaryData)

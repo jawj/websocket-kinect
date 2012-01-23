@@ -21,14 +21,15 @@ class SendClientFactory(WebSocketClientFactory):
   def __init__(self, url):
     WebSocketClientFactory.__init__(self, url)
     self.protocolInstance = None
+    self.tickGap = 5
     self.tickSetup()
 
   def tickSetup(self):
     self.dataSent = 0
-    reactor.callLater(1, self.tick)
+    reactor.callLater(self.tickGap, self.tick)
 
   def tick(self):
-    print 'sent: %d KB/sec' % (self.dataSent >> 10)
+    print 'sending: %d KB/sec' % (self.dataSent / self.tickGap / 1024)
     self.tickSetup()
 
   def register(self, protocolInstance):
@@ -60,14 +61,15 @@ class BroadcastServerFactory(WebSocketServerFactory):
   def __init__(self, url):
     WebSocketServerFactory.__init__(self, url)
     self.clients = []
+    self.tickGap = 5
     self.tickSetup()
     
   def tickSetup(self):
     self.dataSent = 0
-    reactor.callLater(1, self.tick)
+    reactor.callLater(self.tickGap, self.tick)
   
   def tick(self):
-    print 'broadcast: %d KB/sec' % (self.dataSent >> 10)
+    print 'broadcasting: %d KB/sec' % (self.dataSent / self.tickGap / 1024)
     self.tickSetup()
   
   def register(self, client):
