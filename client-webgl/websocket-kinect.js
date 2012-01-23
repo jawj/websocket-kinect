@@ -1,6 +1,7 @@
 (function() {
+
   $(function() {
-    var animate, bgColour, camT, camZ, camZRange, camera, connect, currentOutArrayIdx, dataCallback, doCamPan, doCamZoom, down, dvp, fgColour, h, i, inputH, inputW, kvp, mouseY, outArrays, pLen, pMaterial, params, particle, particleSystem, particles, prevOutArrayIdx, projector, pvs, qbl, qbr, qtl, qtr, rawDataLen, renderer, scene, seenKeyFrame, setSize, startCamPan, stats, stopCamPan, sx, useEvery, v, w, wls, x, xc, y, yc, _i, _len, _ref, _ref2, _ref3;
+    var animate, bgColour, camT, camYRange, camZ, camZRange, camera, connect, currentOutArrayIdx, dataCallback, doCamPan, doCamZoom, down, dvp, fgColour, h, i, inputH, inputW, k, kvp, outArrays, pLen, pMaterial, params, particle, particleSystem, particles, prevOutArrayIdx, projector, pvs, qbl, qbr, qtl, qtr, rawDataLen, renderer, scene, seenKeyFrame, setSize, startCamPan, stats, stopCamPan, sx, sy, useEvery, v, w, wls, x, xc, y, yc, _i, _len, _ref, _ref2, _ref3, _ref4;
     if (!(window.WebGLRenderingContext && document.createElement('canvas').getContext('experimental-webgl') && window.WebSocket && new WebSocket('ws://.').binaryType)) {
       $('#noWebGL').show();
       return;
@@ -8,17 +9,17 @@
     params = {
       stats: 0,
       fog: 1,
-      credits: 1
+      credits: 1,
+      ws: 'ws://localhost:9000'
     };
     wls = window.location.search;
     _ref = wls.substring(1).split('&');
     for (_i = 0, _len = _ref.length; _i < _len; _i++) {
       kvp = _ref[_i];
-      params[kvp.split('=')[0]] = parseInt(kvp.split('=')[1]);
+      _ref2 = kvp.split('='), k = _ref2[0], v = _ref2[1];
+      params[k] = k === 'ws' ? v : parseInt(v);
     }
-    if (params.credits) {
-      $('#creditOuter').show();
-    }
+    if (params.credits) $('#creditOuter').show();
     if (params.stats) {
       stats = new Stats();
       stats.domElement.id = 'stats';
@@ -39,7 +40,7 @@
       antialias: true
     });
     camera = new THREE.PerspectiveCamera(60, 1, 1, 10000);
-    dvp = (_ref2 = window.devicePixelRatio) != null ? _ref2 : 1;
+    dvp = (_ref3 = window.devicePixelRatio) != null ? _ref3 : 1;
     setSize = function() {
       renderer.setSize(window.innerWidth * dvp, window.innerHeight * dvp);
       renderer.domElement.style.width = window.innerWidth + 'px';
@@ -52,12 +53,10 @@
     document.body.appendChild(renderer.domElement);
     renderer.setClearColorHex(bgColour, 1.0);
     renderer.clear();
+    projector = new THREE.Projector();
     scene = new THREE.Scene();
     scene.add(camera);
-    if (params.fog) {
-      scene.fog = new THREE.FogExp2(bgColour, 0.00033);
-    }
-    projector = new THREE.Projector();
+    if (params.fog) scene.fog = new THREE.FogExp2(bgColour, 0.00033);
     pMaterial = new THREE.ParticleBasicMaterial({
       color: fgColour,
       size: useEvery * 3
@@ -75,26 +74,22 @@
     particleSystem = new THREE.ParticleSystem(particles, pMaterial);
     scene.add(particleSystem);
     down = false;
-    sx = 0;
-    camZRange = [2000, 0];
+    sx = sy = 0;
+    camZRange = [2000, 200];
     camZ = 1000;
+    camYRange = [-600, 600];
     camT = new Transform();
-    mouseY = window.innerHeight / 2;
     animate = function() {
-      var _ref3;
+      var _ref4;
       renderer.clear();
-      _ref3 = camT.t(0.01 * camZ * ((qtr + qbr) - (qtl + qbl)), camZ), camera.position.x = _ref3[0], camera.position.z = _ref3[1];
-      camera.position.y = mouseY - window.innerHeight / 2;
+      _ref4 = camT.t(0.01 * camZ * ((qtr + qbr) - (qtl + qbl)), camZ), camera.position.x = _ref4[0], camera.position.z = _ref4[1];
       camera.lookAt(scene.position);
       renderer.render(scene, camera);
       window.requestAnimationFrame(animate, renderer.domElement);
-      if (params.stats) {
-        return stats.update();
-      }
+      if (params.stats) return stats.update();
     };
     animate();
     startCamPan = function(ev) {
-      var sy;
       down = true;
       sx = ev.clientX;
       return sy = ev.clientY;
@@ -105,13 +100,19 @@
     };
     $(renderer.domElement).on('mouseup', stopCamPan);
     doCamPan = function(ev) {
-      var dx, rotation;
-      mouseY = ev.clientY;
+      var camY, dx, dy, rotation;
       if (down) {
         dx = ev.clientX - sx;
-        rotation = dx * -0.0005 * Math.log(camZ);
+        dy = ev.clientY - sy;
+        rotation = dx * 0.0005 * Math.log(camZ);
         camT.rotate(rotation);
-        return sx += dx;
+        camY = camera.position.y;
+        camY += dy * 3;
+        if (camY < camYRange[0]) camY = camYRange[0];
+        if (camY > camYRange[1]) camY = camYRange[1];
+        camera.position.y = camY;
+        sx += dx;
+        return sy += dy;
       }
     };
     $(renderer.domElement).on('mousemove', doCamPan);
@@ -134,21 +135,19 @@
       }
       return _results;
     })();
-    _ref3 = [0, 1], currentOutArrayIdx = _ref3[0], prevOutArrayIdx = _ref3[1];
+    _ref4 = [0, 1], currentOutArrayIdx = _ref4[0], prevOutArrayIdx = _ref4[1];
     dataCallback = function(e) {
-      var aByte, byteIdx, bytes, depth, inStream, keyFrame, outStream, pIdx, prevBytes, pv, x, y, _ref4, _ref5;
-      _ref4 = [prevOutArrayIdx, currentOutArrayIdx], currentOutArrayIdx = _ref4[0], prevOutArrayIdx = _ref4[1];
+      var aByte, byteIdx, bytes, depth, inStream, keyFrame, outStream, pIdx, prevBytes, pv, x, y, _ref5, _ref6;
+      _ref5 = [prevOutArrayIdx, currentOutArrayIdx], currentOutArrayIdx = _ref5[0], prevOutArrayIdx = _ref5[1];
       inStream = LZMA.wrapArrayBuffer(new Uint8Array(e.data));
       outStream = LZMA.wrapArrayBuffer(outArrays[currentOutArrayIdx]);
       LZMA.decompress(inStream, inStream, outStream, rawDataLen);
       bytes = outStream.data;
       prevBytes = outArrays[prevOutArrayIdx];
       keyFrame = bytes[0];
-      if (!(keyFrame || seenKeyFrame)) {
-        return;
-      }
+      if (!(keyFrame || seenKeyFrame)) return;
       seenKeyFrame = true;
-      _ref5 = [bytes[1], bytes[2], bytes[3], bytes[4]], qtl = _ref5[0], qtr = _ref5[1], qbl = _ref5[2], qbr = _ref5[3];
+      _ref6 = [bytes[1], bytes[2], bytes[3], bytes[4]], qtl = _ref6[0], qtr = _ref6[1], qbl = _ref6[2], qbr = _ref6[3];
       pIdx = 0;
       byteIdx = 5;
       for (y = 0; 0 <= h ? y < h : y > h; 0 <= h ? y++ : y--) {
@@ -172,11 +171,10 @@
       return particleSystem.geometry.__dirtyVertices = true;
     };
     connect = function() {
-      var reconnectDelay, url, ws;
-      url = 'ws://128.40.47.71:9000';
+      var reconnectDelay, ws;
       reconnectDelay = 2;
-      console.log("Connecting to " + url + " ...");
-      ws = new WebSocket(url);
+      console.log("Connecting to " + params.ws + " ...");
+      ws = new WebSocket(params.ws);
       ws.binaryType = 'arraybuffer';
       seenKeyFrame = false;
       ws.onopen = function() {
@@ -190,4 +188,5 @@
     };
     return connect();
   });
+
 }).call(this);

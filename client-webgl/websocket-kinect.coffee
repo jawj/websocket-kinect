@@ -9,8 +9,11 @@ $ ->
     stats:   0
     fog:     1
     credits: 1
+    ws:      'ws://localhost:9000'
   wls = window.location.search
-  (params[kvp.split('=')[0]] = parseInt(kvp.split('=')[1])) for kvp in wls.substring(1).split('&')
+  for kvp in wls.substring(1).split('&')
+    [k, v] = kvp.split('=')
+    params[k] = if k is 'ws' then v else parseInt(v)
   
   $('#creditOuter').show() if params.credits
   
@@ -48,11 +51,10 @@ $ ->
   renderer.setClearColorHex(bgColour, 1.0)
   renderer.clear()
   
+  projector = new THREE.Projector()
   scene = new THREE.Scene()
   scene.add(camera)
   scene.fog = new THREE.FogExp2(bgColour, 0.00033) if params.fog
-  
-  projector = new THREE.Projector()
   
   pMaterial = new THREE.ParticleBasicMaterial(color: fgColour, size: useEvery * 3)
   particles = new THREE.Geometry()
@@ -68,16 +70,15 @@ $ ->
   scene.add(particleSystem)
   
   down = no
-  sx = 0
-  camZRange = [2000, 0]
+  sx = sy = 0
+  camZRange = [2000, 200]
   camZ = 1000
+  camYRange = [-600, 600]
   camT = new Transform()
-  mouseY = window.innerHeight / 2
   
   animate = ->
     renderer.clear()
     [camera.position.x, camera.position.z] = camT.t(0.01 * camZ * ((qtr + qbr) - (qtl + qbl)), camZ)
-    camera.position.y = mouseY - window.innerHeight / 2
     camera.lookAt(scene.position)
     renderer.render(scene, camera)
     window.requestAnimationFrame(animate, renderer.domElement)
@@ -96,12 +97,18 @@ $ ->
   $(renderer.domElement).on('mouseup', stopCamPan)
 
   doCamPan = (ev) ->
-    mouseY = ev.clientY
     if down
       dx = ev.clientX - sx
-      rotation = dx * -0.0005 * Math.log(camZ)
+      dy = ev.clientY - sy
+      rotation = dx * 0.0005 * Math.log(camZ)
       camT.rotate(rotation)
+      camY = camera.position.y
+      camY += dy * 3
+      camY = camYRange[0] if camY < camYRange[0]
+      camY = camYRange[1] if camY > camYRange[1]
+      camera.position.y = camY
       sx += dx
+      sy += dy
   $(renderer.domElement).on('mousemove', doCamPan)
   
   doCamZoom = (ev, d, dX, dY) ->
@@ -156,10 +163,9 @@ $ ->
     particleSystem.geometry.__dirtyVertices = yes
     
   connect = ->
-    url = 'ws://128.40.47.71:9000'
     reconnectDelay = 2
-    console.log("Connecting to #{url} ...")
-    ws = new WebSocket(url)
+    console.log("Connecting to #{params.ws} ...")
+    ws = new WebSocket(params.ws)
     ws.binaryType = 'arraybuffer'
     seenKeyFrame = no
     ws.onopen = -> console.log('Connected')
