@@ -24,12 +24,20 @@ else
 httpServer.listen(port)
 
 wsServer = new WebSocketServer(httpServer: httpServer, autoAcceptConnections: false)
+log = (s) -> console.log "#{new Date()} - clients: #{wsServer.connections.length} - #{s}"
+
 wsServer.on 'request', (request) ->
+  if wsServer.connections.length > 3000
+    log "rejected connection"
+    request.reject()
+    return
   connection = request.accept(null, request.origin)
-  console.log "clients: #{wsServer.connections.length}"
+  log "connected: #{connection.remoteAddress}"
   if connection.remoteAddress is sendingAddress
     connection.on 'message', (message) ->
       for c in wsServer.connections
-        continue if c is connection                        # don't send back to the sender
-        continue unless c.socket.bufferSize is 0 or https  # minimal buffering for slow connections (doesn't work with SSL)
+        continue if c is connection                            # don't send back to the sender
+        continue unless https or c.socket.bufferSize < 100000  # minimal buffering for slow connections (doesn't work with SSL)
         c.sendBytes(message.binaryData)
+  connection.on 'close', (reasonCode, description) ->
+    log "disconnected: #{connection.remoteAddress}"

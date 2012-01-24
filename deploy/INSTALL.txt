@@ -1,3 +1,24 @@
 
 # Ubuntu 11.10 EC2 micro instance
 
+ssh -i ~/.ssh/ucl-aws-key.pem ubuntu@ec2-176-34-211-74.eu-west-1.compute.amazonaws.com
+
+sudo add-apt-repository ppa:chris-lea/node.js
+sudo aptitude update
+
+sudo aptitude install nodejs npm htop
+
+sudo aptitude safe-upgrade
+sudo reboot
+
+
+mkdir wskinect
+cd wskinect
+
+wget https://github.com/jawj/websocket-kinect/raw/master/deploy/forwarding.coffee \
+     https://github.com/jawj/websocket-kinect/raw/master/deploy/package.json \
+     https://github.com/jawj/websocket-kinect/raw/master/deploy/index.html
+     
+npm install
+
+

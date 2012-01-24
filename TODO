@@ -1,4 +1,3 @@
-Refactor node.js script + package.json + index.html + AWS recipe to own folder (deploy)
 Node.js script to emit client count on disconnect (as well as reconnect), and client IP too on connect
 Free/new AWS account w/ CASA details (or a limited-time 512MB Linode?)
 Python script to reconnect on disconnection
