@@ -1,13 +1,10 @@
 
-# Ubuntu 11.10 EC2 micro instance
+# EC2 basic Linux micro instance
 
 ssh -i ~/.ssh/ucl-aws-key.pem ubuntu@kinect.mackerron.com
 
-sudo aptitude update
-sudo aptitude safe-upgrade
-sudo reboot
-
-sudo aptitude install build-essential libssl-dev pkg-config
+sudo yum update
+sudo yum install gcc-c++ make openssl-devel
 
 cd && mkdir src && cd src
 
