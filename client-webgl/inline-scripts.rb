@@ -11,4 +11,4 @@ html.gsub!(%r{<script src="(js\.libs/)?[^/"]+"></script>}) do |tag|
   end
   "<script> // #{js}\n#{src.strip}\n</script>" 
 end
-open('index.html', 'w') { |f| f.write(html) }
+open('../deploy/index.html', 'w') { |f| f.write(html) }

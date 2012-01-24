@@ -1,0 +1,3 @@
+
+# Ubuntu 11.10 EC2 micro instance
+
