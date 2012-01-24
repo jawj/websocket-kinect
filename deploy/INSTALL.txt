@@ -15,9 +15,9 @@ sudo reboot
 mkdir wskinect
 cd wskinect
 
-wget https://github.com/jawj/websocket-kinect/raw/master/deploy/forwarding.coffee \
-     https://github.com/jawj/websocket-kinect/raw/master/deploy/package.json \
-     https://github.com/jawj/websocket-kinect/raw/master/deploy/index.html
+wget -N https://github.com/jawj/websocket-kinect/raw/master/deploy/forwarding.coffee \
+        https://github.com/jawj/websocket-kinect/raw/master/deploy/package.json \
+        https://github.com/jawj/websocket-kinect/raw/master/deploy/index.html
      
 npm install
 
