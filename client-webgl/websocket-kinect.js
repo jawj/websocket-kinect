@@ -10,7 +10,7 @@
       stats: 0,
       fog: 1,
       credits: 1,
-      ws: 'ws://localhost:9000'
+      ws: "ws://" + window.location.host
     };
     wls = window.location.search;
     _ref = wls.substring(1).split('&');
