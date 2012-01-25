@@ -7,10 +7,10 @@ https = process.argv[4] is 'https' # third arg -- 'https' or not
 WebSocketServer = require('websocket').server
 fs = require('fs')
 
-html = fs.readFileSync('index.html')
+html = fs.readFileSync('index.html.gz')
 httpCallback = (request, response) ->
-  response.write(html)
-  response.end()
+  response.setHeader('Content-Encoding', 'gzip')
+  response.end(html)
 
 httpServer = if https
   key  = fs.readFileSync('server.key')

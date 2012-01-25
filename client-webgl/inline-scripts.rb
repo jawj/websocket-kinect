@@ -11,4 +11,6 @@ html.gsub!(%r{<script src="(js\.libs/)?[^/"]+"></script>}) do |tag|
   end
   "<script> // #{js}\n#{src.strip}\n</script>" 
 end
-open('../deploy/index.html', 'w') { |f| f.write(html) }
+target = '../deploy/index.html'
+open(target, 'w') { |f| f.write(html) }
+`gzip --best --no-name --force #{target}`

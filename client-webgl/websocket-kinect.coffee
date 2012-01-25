@@ -9,7 +9,7 @@ $ ->
     stats:   0
     fog:     1
     credits: 1
-    ws:      'ws://localhost:9000'
+    ws:      "ws://#{window.location.host}"
   wls = window.location.search
   for kvp in wls.substring(1).split('&')
     [k, v] = kvp.split('=')
