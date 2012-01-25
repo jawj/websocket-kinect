@@ -23,9 +23,13 @@ class SendClientFactory(WebSocketClientFactory):
 
   def __init__(self, url):
     WebSocketClientFactory.__init__(self, url)
+    
     self.protocolInstance = None
     self.tickGap = 5
     self.tickSetup()
+    
+    contextFactory = ssl.ClientContextFactory()  # necessary for SSL; harmless otherwise
+    connectWS(self, contextFactory)
 
   def tickSetup(self):
     self.dataSent = 0
@@ -67,6 +71,8 @@ class BroadcastServerFactory(WebSocketServerFactory):
     self.tickGap = 5
     self.tickSetup()
     
+    listenWS(self)
+    
   def tickSetup(self):
     self.dataSent = 0
     reactor.callLater(self.tickGap, self.tick)
@@ -93,7 +99,9 @@ class BroadcastServerFactory(WebSocketServerFactory):
 
 class Kinect:
   
-  def __init__(self):
+  def __init__(self, wsFactory):
+    self.wsFactory = wsFactory
+    
     useEvery = 4
     self.h = 480 / useEvery
     self.w = 640 / useEvery
@@ -103,7 +111,7 @@ class Kinect:
     self.currentFrame = 0
     
     self.keyFrameEvery = 30
-    self.pixelDiffs = False  # oddly, pixel diffing seems to *increase* comrpessed data size
+    self.pixelDiffs = False  # oddly, pixel diffing seems to *increase* compressed data size
   
   def depthCallback(self, dev, depth, timestamp):
     # resize grid
@@ -136,7 +144,7 @@ class Kinect:
     
     # compress and broadcast
     crunchedData = pylzma.compress(data.astype(numpy.uint8), dictionary = 20)  # 20 -> 2 ** 20 -> 1MB; default: 23 -> 2 ** 23 -> 8MB
-    reactor.callFromThread(factory.broadcast, crunchedData, True)
+    reactor.callFromThread(self.wsFactory.broadcast, crunchedData, True)
     
     # setup for next frame
     self.lastDepth = depth
@@ -164,15 +172,9 @@ url  = sys.argv[2] if len(sys.argv) > 2 else 'ws://localhost:9000'
 signal.signal(signal.SIGINT, signalHandler)
 print '>>> %s --- Press Ctrl-C to stop <<<' % url
 
-kinect = Kinect()
+
+factory = BroadcastServerFactory(url) if func == 'server' else SendClientFactory(url)
+kinect = Kinect(factory)
+
 kinect.run()
-
-if func == 'server':
-  factory = BroadcastServerFactory(url)
-  listenWS(factory)
-else:
-  factory = SendClientFactory(url)
-  contextFactory = ssl.ClientContextFactory()
-  connectWS(factory, contextFactory)
-
 reactor.run()
