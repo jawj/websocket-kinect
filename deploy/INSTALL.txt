@@ -21,7 +21,7 @@ cd && mkdir wskinect && cd wskinect
 
 wget -N https://github.com/jawj/websocket-kinect/raw/master/deploy/forwarding.coffee \
         https://github.com/jawj/websocket-kinect/raw/master/deploy/package.json \
-        https://github.com/jawj/websocket-kinect/raw/master/deploy/index.html
+        https://github.com/jawj/websocket-kinect/raw/master/deploy/index.html.gz
      
 npm install
 
