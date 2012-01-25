@@ -5,6 +5,7 @@ ssh -i ~/.ssh/ucl-aws-key.pem ec2-user@kinect.mackerron.com
 
 sudo yum update
 sudo yum install gcc-c++ make openssl-devel screen
+sudo yum install htop --enablerepo=epel
 
 cd && mkdir src && cd src
 
@@ -23,6 +24,8 @@ wget -N https://github.com/jawj/websocket-kinect/raw/master/deploy/forwarding.co
         https://github.com/jawj/websocket-kinect/raw/master/deploy/index.html
      
 npm install
+
+
 
 
 # create .screenrc
