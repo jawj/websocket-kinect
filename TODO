@@ -1,5 +1,2 @@
-Node.js script to emit client count on disconnect (as well as reconnect), and client IP too on connect
-Free/new AWS account w/ CASA details (or a limited-time 512MB Linode?)
 Python script to reconnect on disconnection
-CNAME (or Elastic IP + A record) for EC2 server
-Node.js script to refuse connections when total buffer size/total client connections > X?
+Client page play/pause feature, with auto-pause after N non-interactive minutes (to conserve bandwidth)
