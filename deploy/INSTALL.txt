@@ -1,10 +1,10 @@
 
 # EC2 basic Linux micro instance
 
-ssh -i ~/.ssh/ucl-aws-key.pem ubuntu@kinect.mackerron.com
+ssh -i ~/.ssh/ucl-aws-key.pem ec2-user@kinect.mackerron.com
 
 sudo yum update
-sudo yum install gcc-c++ make openssl-devel
+sudo yum install gcc-c++ make openssl-devel screen
 
 cd && mkdir src && cd src
 
@@ -25,3 +25,21 @@ wget -N https://github.com/jawj/websocket-kinect/raw/master/deploy/forwarding.co
 npm install
 
 
+# create .screenrc
+
+escape ``
+hardstatus alwayslastline
+hardstatus string '%{= kG}[ %{G}%H %{g}][%= %{= kw}%?%-Lw%?%{r}(%{W}%n*%f%t%?(%u)%?%{r})%{w}%?%+Lw%?%?%= %{g}][%{B} %d/%m %{W}%c %{g}]'
+
+
+# add to top of .bashrc
+
+# Auto-screen invocation. see: http://taint.org/wk/RemoteLoginAutoScreen
+if [ "$PS1" != "" -a "${STARTED_SCREEN:-x}" = x -a "${SSH_TTY:-x}" != x ]
+then
+  STARTED_SCREEN=1 ; export STARTED_SCREEN
+  sleep 1
+  screen -RR && exit 0
+  # normally, execution of this rc script ends here...
+  echo "Screen failed! continuing with normal bash startup"
+fi
