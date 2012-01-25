@@ -1,5 +1,5 @@
 
-# EC2 basic Linux micro instance
+# EC2 basic Linux micro instance -- with open port 22 for me and port 80 for everyone
 
 ssh -i ~/.ssh/ucl-aws-key.pem ec2-user@kinect.mackerron.com
 
@@ -25,7 +25,11 @@ wget -N https://github.com/jawj/websocket-kinect/raw/master/deploy/forwarding.co
      
 npm install
 
+sudo iptables -t nat -A PREROUTING -p tcp --dport 80 -j REDIRECT --to-ports 8000
+sudo /sbin/service iptables save
 
+
+node_modules/coffee-script/bin/coffee forwarding.coffee nnn.nnn.nnn.nnn 8000 http
 
 
 # create .screenrc
