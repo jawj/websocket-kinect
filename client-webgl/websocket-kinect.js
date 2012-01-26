@@ -27,7 +27,7 @@
     }
     bgColour = 0x000000;
     fgColour = 0xffffff;
-    inputW = 640;
+    inputW = 632;
     inputH = 480;
     useEvery = 4;
     w = inputW / useEvery;

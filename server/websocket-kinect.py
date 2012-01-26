@@ -104,18 +104,28 @@ class Kinect:
     
     useEvery = 4
     self.h = 480 / useEvery
-    self.w = 640 / useEvery
+    self.w = 632 / useEvery
+    
     self.useCols, self.useRows = numpy.indices((self.h, self.w))
     self.useCols *= useEvery
     self.useRows *= useEvery
-    self.currentFrame = 0
+    self.useCols1 = self.useCols + 1
+    self.useRows1 = self.useRows + 1
+    self.zeroFrame = numpy.zeros((self.h, self.w))
     
+    self.currentFrame = 0
     self.keyFrameEvery = 30
     self.pixelDiffs = False  # oddly, pixel diffing seems to *increase* compressed data size
   
   def depthCallback(self, dev, depth, timestamp):
     # resize grid
-    depth = depth[self.useCols, self.useRows]
+    # depth = depth[self.useCols, self.useRows]
+    
+    d1 = depth[self.useCols,     self.useRows]
+    d2 = depth[self.useCols + 1, self.useRows]
+    d3 = depth[self.useCols,     self.useRows + 1]
+    d4 = depth[self.useCols + 1, self.useRows + 1]
+    depth = numpy.median(numpy.dstack(self.zeroFrame, d1, d2, d3, d4), axis = 2)
     
     # rescale depths
     numpy.clip(depth, 0, 2 ** 10 - 1, depth)
