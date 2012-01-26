@@ -112,8 +112,11 @@ class Kinect:
     
     self.pixelDiffs = False
     
-    self.takeMedian = True
-    self.depth1 = self.depth2 = numpy.zeros((self.h, self.w))
+    self.medianOf = 3  # must be odd, or we'll get artefacts; 3 or 5 are the sweet spot
+    zeros = numpy.zeros((self.h, self.w))
+    self.depths = []
+    for i in range(self.medianOf - 1):
+      self.depths.append(zeros)
     
     self.currentFrame = 0
     self.keyFrameEvery = 30
@@ -122,11 +125,11 @@ class Kinect:
     # resize grid
     depth0 = depth[self.useCols, self.useRows]
     
-    # optionally take median of this + previous two frames: reduces noise, and greatly improves compression on similar frames
-    if self.takeMedian:
-      depthMedian = numpy.median(numpy.dstack((depth0, self.depth1, self.depth2)), axis = 2).astype(numpy.int16)
-      self.depth1, self.depth2 = depth0, self.depth1
-      depth = depthMedian
+    # median of this + previous frames: reduces noise, and greatly improves compression on similar frames
+    if self.medianOf > 1:
+      self.depths.insert(0, depth0)
+      depth = numpy.median(numpy.dstack(self.depths), axis = 2).astype(numpy.int16)
+      self.depths.pop()
     else:
       depth = depth0
     
