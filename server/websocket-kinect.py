@@ -109,29 +109,32 @@ class Kinect:
     self.useCols, self.useRows = numpy.indices((self.h, self.w))
     self.useCols *= useEvery
     self.useRows *= useEvery
-    self.useCols1 = self.useCols + 1
-    self.useRows1 = self.useRows + 1
-    self.zeroFrame = numpy.zeros((self.h, self.w))
+    
+    self.pixelDiffs = False
+    
+    self.takeMedian = True
+    self.depth1 = self.depth2 = numpy.zeros((self.h, self.w))
     
     self.currentFrame = 0
     self.keyFrameEvery = 30
-    self.pixelDiffs = False  # oddly, pixel diffing seems to *increase* compressed data size
   
   def depthCallback(self, dev, depth, timestamp):
     # resize grid
-    # depth = depth[self.useCols, self.useRows]
+    depth0 = depth[self.useCols, self.useRows]
     
-    d1 = depth[self.useCols,     self.useRows]
-    d2 = depth[self.useCols + 1, self.useRows]
-    d3 = depth[self.useCols,     self.useRows + 1]
-    d4 = depth[self.useCols + 1, self.useRows + 1]
-    depth = numpy.median(numpy.dstack(self.zeroFrame, d1, d2, d3, d4), axis = 2)
+    # optionally take median of this + previous two frames: reduces noise, and greatly improves compression on similar frames
+    if self.takeMedian:
+      depthMedian = numpy.median(numpy.dstack((depth0, self.depth1, self.depth2)), axis = 2).astype(numpy.int16)
+      self.depth1, self.depth2 = depth0, self.depth1
+      depth = depthMedian
+    else:
+      depth = depth0
     
     # rescale depths
     numpy.clip(depth, 0, 2 ** 10 - 1, depth)
     depth >>= 2
     
-    # calculate quadrant averages
+    # calculate quadrant averages (used to pan camera; could otherwise be done in JS)
     h, w = self.h, self.w
     halfH, halfW = h / 2, w / 2
     qtl = numpy.mean(depth[0:halfH, 0:halfW])
@@ -145,7 +148,7 @@ class Kinect:
     keyFrame = self.currentFrame == 0
     diffDepth = depth if keyFrame else depth - self.lastDepth
     
-    # calculate pixel diffs, if required
+    # optionally produce pixel diffs (oddly, pixel diffing seems to *increase* compressed data size)
     if self.pixelDiffs:
       diffDepth = numpy.concatenate(([diffDepth[0]], numpy.diff(diffDepth)))
    
@@ -153,7 +156,7 @@ class Kinect:
     data = numpy.concatenate(([keyFrame, qtl, qtr, qbl, qbr], diffDepth % 256))
     
     # compress and broadcast
-    crunchedData = pylzma.compress(data.astype(numpy.uint8), dictionary = 20)  # 20 -> 2 ** 20 -> 1MB; default: 23 -> 2 ** 23 -> 8MB
+    crunchedData = pylzma.compress(data.astype(numpy.uint8), dictionary = 20)  # default: 23 -> 2 ** 23 -> 8MB
     reactor.callFromThread(self.wsFactory.broadcast, crunchedData, True)
     
     # setup for next frame
@@ -164,7 +167,7 @@ class Kinect:
   def bodyCallback(self, *args):
     if not self.kinecting: raise freenect.Kill
   
-  def run(self):
+  def runInOtherThread(self):
     self.kinecting = True
     reactor.callInThread(freenect.runloop, depth = self.depthCallback, body = self.bodyCallback)
   
@@ -186,5 +189,5 @@ print '>>> %s --- Press Ctrl-C to stop <<<' % url
 factory = BroadcastServerFactory(url) if func == 'server' else SendClientFactory(url)
 kinect = Kinect(factory)
 
-kinect.run()
+kinect.runInOtherThread()
 reactor.run()
