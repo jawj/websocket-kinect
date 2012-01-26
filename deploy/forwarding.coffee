@@ -7,10 +7,16 @@ https = process.argv[4] is 'https' # third arg -- 'https' or not
 WebSocketServer = require('websocket').server
 fs = require('fs')
 
-html = fs.readFileSync('index.html.gz')
+page = fs.readFileSync('index.html.gz')
+pageLen = html.length
 httpCallback = (request, response) ->
-  response.setHeader('Content-Encoding', 'gzip')
-  response.end(html)
+  m = request.method
+  if m in ['GET', 'HEAD']
+    response.setHeader('Content-Encoding', 'gzip')
+    response.write(page) if m is 'GET'
+  else
+    response.writeHead(501, 'Not Implemented')
+  response.end()
 
 httpServer = if https
   key  = fs.readFileSync('server.key')
@@ -27,7 +33,7 @@ wsServer = new WebSocketServer(httpServer: httpServer, autoAcceptConnections: fa
 log = (s) -> console.log "#{new Date()} - clients: #{wsServer.connections.length} - #{s}"
 
 wsServer.on 'request', (request) ->
-  if wsServer.connections.length > 1000
+  if wsServer.connections.length > 100  # max connections
     log "rejected connection"
     request.reject()
     return
@@ -36,8 +42,7 @@ wsServer.on 'request', (request) ->
   if connection.remoteAddress is sendingAddress
     connection.on 'message', (message) ->
       for c in wsServer.connections
-        continue if c is connection                            # don't send back to the sender
-        continue unless https or c.socket.bufferSize < 200000  # minimal buffering for slow connections (doesn't work with SSL)
-        c.sendBytes(message.binaryData)
+        # don't send back to the sender and only allow 256KB of buffering (unless on https, when bufferSize isn't available)
+        c.sendBytes(message.binaryData) if c isnt connection and (https or c.socket.bufferSize < 262144)
   connection.on 'close', (reasonCode, description) ->
     log "disconnected: #{connection.remoteAddress}"

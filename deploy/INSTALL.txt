@@ -17,19 +17,8 @@ export JOBS=2
 make
 sudo make install
 
-cd && mkdir wskinect && cd wskinect
-
-wget -N https://github.com/jawj/websocket-kinect/raw/master/deploy/forwarding.coffee \
-        https://github.com/jawj/websocket-kinect/raw/master/deploy/package.json \
-        https://github.com/jawj/websocket-kinect/raw/master/deploy/index.html.gz
-     
-npm install
-
 sudo iptables -t nat -A PREROUTING -p tcp --dport 80 -j REDIRECT --to-ports 8000
 sudo /sbin/service iptables save
-
-
-node_modules/coffee-script/bin/coffee forwarding.coffee nnn.nnn.nnn.nnn 8000 http
 
 
 # create .screenrc
@@ -50,3 +39,14 @@ then
   # normally, execution of this rc script ends here...
   echo "Screen failed! continuing with normal bash startup"
 fi
+
+
+sudo useradd nodejs
+sudo su - nodejs
+
+BASE=https://github.com/jawj/websocket-kinect/raw/master/deploy
+wget -q -N $BASE/forwarding.coffee $BASE/package.json $BASE/index.html.gz
+     
+npm install
+
+node_modules/coffee-script/bin/coffee forwarding.coffee nnn.nnn.nnn.nnn 8000 http
