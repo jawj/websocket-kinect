@@ -8,7 +8,7 @@ WebSocketServer = require('websocket').server
 fs = require('fs')
 
 page = fs.readFileSync('index.html.gz')
-pageLen = html.length
+pageLen = page.length
 httpCallback = (request, response) ->
   m = request.method
   if m in ['GET', 'HEAD']
