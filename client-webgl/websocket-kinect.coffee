@@ -69,6 +69,23 @@ $ ->
   particleSystem = new THREE.ParticleSystem(particles, pMaterial)
   scene.add(particleSystem)
   
+  togglePlay = ->
+    
+  drawControl = (playing) ->
+    cvs = $('#control')[0]
+    ctx = cvs.getContext('2d')
+    ctx.fillStyle = '#fff'
+    if playing  # square -> stop
+      ctx.fillRect(0, 0, cvs.width, cvs.height)  
+    else  # triangle -> play
+      ctx.clearRect(0, 0, cvs.width, cvs.height)
+      ctx.moveTo(0, 0)
+      ctx.lineTo(cvs.width, cvs.height / 2)
+      ctx.lineTo(0, cvs.height)
+      ctx.fill()
+  
+  drawControl(no)
+  
   down = no
   dynaPan = 0
   sx = sy = 0

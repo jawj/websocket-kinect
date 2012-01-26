@@ -1,7 +1,7 @@
 (function() {
 
   $(function() {
-    var animate, bgColour, camT, camYRange, camZ, camZRange, camera, connect, currentOutArrayIdx, dataCallback, doCamPan, doCamZoom, down, dvp, dynaPan, fgColour, h, i, inputH, inputW, k, kvp, outArrays, pLen, pMaterial, params, particle, particleSystem, particles, prevOutArrayIdx, projector, pvs, qbl, qbr, qtl, qtr, rawDataLen, renderer, scene, seenKeyFrame, setSize, startCamPan, stats, stopCamPan, sx, sy, useEvery, v, w, wls, x, xc, y, yc, _i, _len, _ref, _ref2, _ref3, _ref4;
+    var animate, bgColour, camT, camYRange, camZ, camZRange, camera, connect, currentOutArrayIdx, dataCallback, doCamPan, doCamZoom, down, drawControl, dvp, dynaPan, fgColour, h, i, inputH, inputW, k, kvp, outArrays, pLen, pMaterial, params, particle, particleSystem, particles, prevOutArrayIdx, projector, pvs, qbl, qbr, qtl, qtr, rawDataLen, renderer, scene, seenKeyFrame, setSize, startCamPan, stats, stopCamPan, sx, sy, togglePlay, useEvery, v, w, wls, x, xc, y, yc, _i, _len, _ref, _ref2, _ref3, _ref4;
     if (!(window.WebGLRenderingContext && document.createElement('canvas').getContext('experimental-webgl') && window.WebSocket && new WebSocket('ws://.').binaryType)) {
       $('#noWebGL').show();
       return;
@@ -73,6 +73,23 @@
     }
     particleSystem = new THREE.ParticleSystem(particles, pMaterial);
     scene.add(particleSystem);
+    togglePlay = function() {};
+    drawControl = function(playing) {
+      var ctx, cvs;
+      cvs = $('#control')[0];
+      ctx = cvs.getContext('2d');
+      ctx.fillStyle = '#fff';
+      if (playing) {
+        return ctx.fillRect(0, 0, cvs.width, cvs.height);
+      } else {
+        ctx.clearRect(0, 0, cvs.width, cvs.height);
+        ctx.moveTo(0, 0);
+        ctx.lineTo(cvs.width, cvs.height / 2);
+        ctx.lineTo(0, cvs.height);
+        return ctx.fill();
+      }
+    };
+    drawControl(false);
     down = false;
     dynaPan = 0;
     sx = sy = 0;
