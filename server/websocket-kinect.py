@@ -119,7 +119,7 @@ class Kinect:
       self.depths.append(zeros)
     
     self.currentFrame = 0
-    self.keyFrameEvery = 30
+    self.keyFrameEvery = 60
   
   def depthCallback(self, dev, depth, timestamp):
     # resize grid

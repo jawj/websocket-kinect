@@ -56,7 +56,7 @@ $ ->
   scene.add(camera)
   scene.fog = new THREE.FogExp2(bgColour, 0.00033) if params.fog
   
-  pMaterial = new THREE.ParticleBasicMaterial(color: fgColour, size: useEvery * 3)
+  pMaterial = new THREE.ParticleBasicMaterial(color: fgColour, size: useEvery * 3.5)
   particles = new THREE.Geometry()
   for y in [0...h]
     for x in [0...w]
@@ -84,13 +84,13 @@ $ ->
       ctx.lineTo(0, cvs.height)
       ctx.fill()
   
-  drawControl(no)
+  drawControl(false)
   
   down = no
   dynaPan = 0
   sx = sy = 0
   camZRange = [2000, 200]
-  camZ = 1000
+  camZ = 880
   camYRange = [-600, 600]
   camT = new Transform()
   

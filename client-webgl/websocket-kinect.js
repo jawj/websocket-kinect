@@ -59,7 +59,7 @@
     if (params.fog) scene.fog = new THREE.FogExp2(bgColour, 0.00033);
     pMaterial = new THREE.ParticleBasicMaterial({
       color: fgColour,
-      size: useEvery * 3
+      size: useEvery * 3.5
     });
     particles = new THREE.Geometry();
     for (y = 0; 0 <= h ? y < h : y > h; 0 <= h ? y++ : y--) {
@@ -94,7 +94,7 @@
     dynaPan = 0;
     sx = sy = 0;
     camZRange = [2000, 200];
-    camZ = 1000;
+    camZ = 880;
     camYRange = [-600, 600];
     camT = new Transform();
     animate = function() {
