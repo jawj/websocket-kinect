@@ -102,13 +102,13 @@ class Kinect:
   def __init__(self, wsFactory):
     self.wsFactory = wsFactory
     
-    useEvery = 4
-    self.h = 480 / useEvery
-    self.w = 632 / useEvery
+    self.useEvery = 4
+    self.h = 480 / self.useEvery
+    self.w = 632 / self.useEvery
     
     self.useCols, self.useRows = numpy.indices((self.h, self.w))
-    self.useCols *= useEvery
-    self.useRows *= useEvery
+    self.useCols *= self.useEvery
+    self.useRows *= self.useEvery
     
     self.pixelDiffs = False
     
@@ -124,6 +124,25 @@ class Kinect:
   def depthCallback(self, dev, depth, timestamp):
     # resize grid
     depth0 = depth[self.useCols, self.useRows]
+    
+    """
+    # manual frame medianing -- v slow
+    h, w, u = self.h, self.w, self.useEvery
+    depth0 = numpy.empty(shape = (h, w))
+    medianIdx = u ** 2 / 2
+    for y in range(0, h):
+      for x in range(0, w):
+        yOff, xOff = y * u, x * u
+        box = depth[yOff : yOff + u, xOff : xOff + u]
+        depth0[y, x] = numpy.sort(box.reshape(-1))[medianIdx]
+    """
+    """
+    # less manual frame medianing -- also v slow -- needs w of 640, not 632
+    h, w, u = self.h, self.w, self.useEvery
+    medianLen = u ** 2
+    medianIdx = medianLen / 2
+    depth0 = numpy.sort(numpy.array(numpy.hsplit(numpy.array(numpy.hsplit(depth, w)), h)).reshape(-1, medianLen))[..., medianIdx].reshape(h, w)
+    """
     
     # median of this + previous frames: reduces noise, and greatly improves compression on similar frames
     if self.medianOf > 1:
@@ -159,7 +178,7 @@ class Kinect:
     data = numpy.concatenate(([keyFrame, qtl, qtr, qbl, qbr], diffDepth % 256))
     
     # compress and broadcast
-    crunchedData = pylzma.compress(data.astype(numpy.uint8), dictionary = 20)  # default: 23 -> 2 ** 23 -> 8MB
+    crunchedData = pylzma.compress(data.astype(numpy.uint8), dictionary = 18)  # default: 23 -> 2 ** 23 -> 8MB
     reactor.callFromThread(self.wsFactory.broadcast, crunchedData, True)
     
     # setup for next frame
