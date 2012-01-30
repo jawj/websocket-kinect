@@ -1,5 +1,10 @@
 #!/usr/bin/env coffee
 
+# changes for Nodester:
+# - hardcode the 3 command-line parameters immediately below
+# - uploaded precompiled as server.js
+# - read index.html.gz from /app
+
 sendingAddress = process.argv[2]   # first argument  -- e.g. '127.0.0.1'
 port = parseInt(process.argv[3])   # second argument -- e.g. 10000
 https = process.argv[4] is 'https' # third arg -- 'https' or not

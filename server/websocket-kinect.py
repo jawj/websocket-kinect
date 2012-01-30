@@ -16,6 +16,7 @@ class SendClientProtocol(WebSocketClientProtocol):
     print 'connection lost'
     WebSocketClientProtocol.connectionLost(self, reason)
     self.factory.unregister(self)
+    reactor.callLater(2, self.factory.connect)
     
 class SendClientFactory(WebSocketClientFactory):
   
@@ -28,9 +29,12 @@ class SendClientFactory(WebSocketClientFactory):
     self.tickGap = 5
     self.tickSetup()
     
+    self.connect()
+  
+  def connect(self):
     contextFactory = ssl.ClientContextFactory()  # necessary for SSL; harmless otherwise
     connectWS(self, contextFactory)
-
+    
   def tickSetup(self):
     self.dataSent = 0
     reactor.callLater(self.tickGap, self.tick)
