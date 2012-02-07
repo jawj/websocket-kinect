@@ -13,7 +13,6 @@ WebSocketServer = require('websocket').server
 fs = require('fs')
 
 page = fs.readFileSync('index.html.gz')
-pageLen = page.length
 httpCallback = (request, response) ->
   m = request.method
   if m in ['GET', 'HEAD']
@@ -26,11 +25,9 @@ httpCallback = (request, response) ->
 httpServer = if https
   key  = fs.readFileSync('server.key')
   cert = fs.readFileSync('server.crt')
-  https = require('https')
-  https.createServer {key, cert}, httpCallback
+  require('https').createServer {key, cert}, httpCallback
 else
-  http = require('http')
-  http.createServer httpCallback
+  require('http').createServer httpCallback
 
 httpServer.listen(port)
 
