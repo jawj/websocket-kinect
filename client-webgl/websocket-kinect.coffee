@@ -182,7 +182,7 @@ $ ->
     particleSystem.geometry.__dirtyVertices = yes
     
   connect = ->
-    reconnectDelay = 2
+    reconnectDelay = 10
     console.log("Connecting to #{params.ws} ...")
     ws = new WebSocket(params.ws)
     ws.binaryType = 'arraybuffer'

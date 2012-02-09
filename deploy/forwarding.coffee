@@ -5,6 +5,8 @@
 # - uploaded precompiled as server.js
 # - read index.html.gz from /app
 
+# changes for cloudno.de: as Nodester, except index.html.gz can be read from local dir
+
 sendingAddress = process.argv[2]   # first argument  -- e.g. '127.0.0.1'
 port = parseInt(process.argv[3])   # second argument -- e.g. 10000
 https = process.argv[4] is 'https' # third arg -- 'https' or not
