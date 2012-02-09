@@ -1,0 +1,57 @@
+
+# Ubuntu 11.10 with ssh
+
+passwd
+
+sudo aptitude update
+sudo aptitude safe-upgrade
+sudo reboot
+
+
+sudo su -
+
+iptables -F
+iptables -X
+iptables -A FORWARD -j DROP
+iptables -A OUTPUT -j ACCEPT
+
+iptables -A INPUT -i lo -j ACCEPT
+iptables -A INPUT ! -i lo -d 127.0.0.0/8 -j DROP
+iptables -A INPUT -m state --state ESTABLISHED,RELATED -j ACCEPT
+iptables -A INPUT -p tcp --dport http -j ACCEPT
+
+iptables -N specialips
+iptables -A specialips -s 128.40.0.0/16 -j RETURN
+iptables -A specialips -j DROP
+
+iptables -A INPUT -j specialips
+iptables -A INPUT -p tcp --dport ssh -j ACCEPT
+iptables -A INPUT -j DROP
+
+iptables -t nat -A PREROUTING -p tcp --dport http -j REDIRECT --to-ports 8000
+
+iptables-save > /etc/iptables.rules
+echo "pre-up iptables-restore < /etc/iptables.rules" >> /etc/network/interfaces
+
+
+sudo aptitude install build-essential libssl-dev pkg-config htop
+
+cd && mkdir src && cd src
+
+wget http://nodejs.org/dist/v0.6.10/node-v0.6.10.tar.gz
+tar xzvf node-[tab]
+cd node-[tab]
+./configure
+make
+sudo make install
+
+
+sudo adduser --disabled-login nodejs
+sudo su - nodejs
+
+BASE=https://github.com/jawj/websocket-kinect/raw/master/deploy
+wget -q -N $BASE/forwarding.coffee $BASE/package.json $BASE/index.html.gz
+     
+npm install
+
+node_modules/coffee-script/bin/coffee forwarding.coffee nnn.nnn.nnn.nnn 8000 http
