@@ -18,17 +18,18 @@ iptables -A OUTPUT -j ACCEPT
 iptables -A INPUT -i lo -j ACCEPT
 iptables -A INPUT ! -i lo -d 127.0.0.0/8 -j DROP
 iptables -A INPUT -m state --state ESTABLISHED,RELATED -j ACCEPT
-iptables -A INPUT -p tcp --dport http -j ACCEPT
+iptables -A INPUT -p tcp --dport 8000 -j ACCEPT
 
 iptables -N specialips
 iptables -A specialips -s 128.40.0.0/16 -j RETURN
 iptables -A specialips -j DROP
 
 iptables -A INPUT -j specialips
-iptables -A INPUT -p tcp --dport ssh -j ACCEPT
+iptables -A INPUT -p tcp --dport 22 -j ACCEPT
 iptables -A INPUT -j DROP
 
-iptables -t nat -A PREROUTING -p tcp --dport http -j REDIRECT --to-ports 8000
+iptables -t nat -F
+iptables -t nat -A PREROUTING -p tcp --dport 80 -j REDIRECT --to-ports 8000
 
 iptables-save > /etc/iptables.rules
 echo "pre-up iptables-restore < /etc/iptables.rules" >> /etc/network/interfaces
