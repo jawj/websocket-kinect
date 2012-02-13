@@ -42,7 +42,7 @@ wsServer.on 'request', (request) ->
     request.reject()
     return
   connection = request.accept(null, request.origin)
-  log "connected:    #{connection.remoteAddress}"
+  log "connected:    #{connection.remoteAddress}\x07"
   if connection.remoteAddress is sendingAddress
     connection.on 'message', (message) ->
       for c in wsServer.connections
