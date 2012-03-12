@@ -1,8 +1,13 @@
 
 # On Mac OS (Lion) with homebrew:
 
+brew install cmake
+brew install automake
+brew install autoconf
+brew install libtool
 brew install pkg-config
 brew install xz
+brew install wget
 sudo easy_install pylzma
 sudo easy_install pip
 sudo pip install cython
@@ -12,6 +17,13 @@ sudo pip install autobahn
 cd /usr/local/Library/Formula
 curl --insecure -O https://raw.github.com/OpenKinect/libfreenect/master/platform/osx/homebrew/libfreenect.rb
 curl --insecure -O https://raw.github.com/OpenKinect/libfreenect/master/platform/osx/homebrew/libusb-freenect.rb
+
+### 
+# Note: libfreenect won't build with Clang as at 2012-03-12, so if you're on Lion with no real GCC:
+brew install https://raw.github.com/adamv/homebrew-alt/master/duplicates/apple-gcc42.rb
+brew edit libfreenect  # add 'ENV.gcc' as the first line of the install method (i.e. straight after 'def install')
+###
+
 brew install libfreenect
 
 cd ~/src
