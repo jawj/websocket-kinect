@@ -1,4 +1,3 @@
-
 # On Mac OS (Lion) with homebrew:
 
 brew install cmake
@@ -20,7 +19,7 @@ curl --insecure -O https://raw.github.com/OpenKinect/libfreenect/master/platform
 
 ### 
 # Note: libfreenect won't build with Clang as at 2012-03-12, so if you're on Lion with no real GCC:
-brew install https://raw.github.com/adamv/homebrew-alt/master/duplicates/apple-gcc42.rb
+brew install https://raw.github.com/Homebrew/homebrew-dupes/master/apple-gcc42.rb
 brew edit libfreenect  # add 'ENV.gcc' as the first line of the install method (i.e. straight after 'def install')
 ###
 
