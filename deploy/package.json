@@ -1,3 +1,14 @@
-{ "name": "websocket-kinect"
-, "version": "0.1.0"
-, "dependencies": { "websocket": "~1", "coffee-script": "~1" } }
+{
+  "name": "websocket-kinect",
+  "version": "0.1.0",
+  "scripts": {
+    "start": "node_modules/coffee-script/bin/coffee forwarding.coffee"
+  },
+  "dependencies": {
+    "websocket": "~1",
+    "coffee-script": "~1"
+  },
+  "devDependencies": {
+    "util": "^0.10.3"
+  }
+}

@@ -6,7 +6,7 @@
 # - read index.html.gz from /app
 
 # changes for cloudno.de: as Nodester, except index.html.gz can be read from local dir
-
+util = require('util')
 sendingAddress = process.argv[2]   # first argument  -- e.g. '127.0.0.1'
 port = parseInt(process.argv[3])   # second argument -- e.g. 10000
 https = process.argv[4] is 'https' # third arg -- 'https' or not
@@ -43,6 +43,8 @@ wsServer.on 'request', (request) ->
     return
   connection = request.accept(null, request.origin)
   log "connected:    #{connection.remoteAddress}\x07"
+  # Use this to figure out what you need to enter for your sendingAddress argument
+  # log (console.log(util.inspect(connection, {showHidden: false, depth: null})))
   if connection.remoteAddress is sendingAddress
     connection.on 'message', (message) ->
       for c in wsServer.connections
