@@ -3,7 +3,7 @@
 import sys, signal, numpy, freenect, pylzma
 from twisted.internet import reactor, threads, ssl
 from twisted.web.client import WebClientContextFactory
-from autobahn.websocket import WebSocketServerFactory, WebSocketServerProtocol, listenWS, WebSocketClientFactory, WebSocketClientProtocol, connectWS
+from autobahn.twisted.websocket import WebSocketServerFactory, WebSocketServerProtocol, listenWS, WebSocketClientFactory, WebSocketClientProtocol, connectWS
 
 
 class SendClientProtocol(WebSocketClientProtocol):

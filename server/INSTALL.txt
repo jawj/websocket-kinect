@@ -9,9 +9,14 @@ brew install xz
 brew install wget
 sudo easy_install pylzma
 sudo easy_install pip
+### Mac Sierra may need to use sudo -H pip install [library]
 sudo pip install cython
 sudo pip install numpy
 sudo pip install autobahn
+sudo pip install twisted
+### Sierra may also need SSL upgraded, else Twisted raises an error
+sudo pip install --upgrade pyopenssl
+sudo pip install service_identity
 
 cd /usr/local/Library/Formula
 curl --insecure -O https://raw.github.com/OpenKinect/libfreenect/master/platform/osx/homebrew/libfreenect.rb
