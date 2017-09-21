@@ -1,9 +1,9 @@
 
 $ ->
-  unless window.WebGLRenderingContext and document.createElement('canvas').getContext('experimental-webgl') and window.WebSocket and new WebSocket('ws://.').binaryType
-    # no point testing for plain 'webgl' context, because Three.js doesn't
-    $('#noWebGL').show()
-    return
+  #unless window.WebGLRenderingContext and document.createElement('canvas').getContext('experimental-webgl') and window.WebSocket and new WebSocket('ws://.').binaryType
+  #  # no point testing for plain 'webgl' context, because Three.js doesn't
+  #  $('#noWebGL').show()
+  #  return
   
   params = 
     stats:   0
@@ -32,7 +32,7 @@ $ ->
   h = inputH / useEvery
   
   Transform::t = Transform::transformPoint
-  v = (x, y, z) -> new THREE.Vertex(new THREE.Vector3(x, y, z))
+  v = (x, y, z) -> new THREE.Vector3(x, y, z)
   
   renderer = new THREE.WebGLRenderer(antialias: true)
   camera = new THREE.PerspectiveCamera(60, 1, 1, 10000)  # aspect (2nd param) shortly to be overridden...
@@ -48,7 +48,7 @@ $ ->
   $(window).on('resize', setSize)
   
   document.body.appendChild(renderer.domElement)
-  renderer.setClearColorHex(bgColour, 1.0)
+  renderer.setClearColor(bgColour, 1.0)
   renderer.clear()
   
   projector = new THREE.Projector()
@@ -56,7 +56,7 @@ $ ->
   scene.add(camera)
   scene.fog = new THREE.FogExp2(bgColour, 0.00033) if params.fog
   
-  pMaterial = new THREE.ParticleBasicMaterial(color: fgColour, size: useEvery * 3.5)
+  pMaterial = new THREE.PointsMaterial(color: fgColour, size: useEvery * 3.5)
   particles = new THREE.Geometry()
   for y in [0...h]
     for x in [0...w]
@@ -66,7 +66,7 @@ $ ->
       particle.usualY = yc
       particles.vertices.push(particle)
   
-  particleSystem = new THREE.ParticleSystem(particles, pMaterial)
+  particleSystem = new THREE.Points(particles, pMaterial)
   scene.add(particleSystem)
   
   togglePlay = ->
@@ -171,15 +171,16 @@ $ ->
         aByte = bytes[byteIdx]
         aByte = bytes[byteIdx] = (prevBytes[byteIdx] + aByte) % 256 unless keyFrame
         if aByte is 255
-          pv.position.y = -5000  # = out of sight
+          pv.y = -5000
         else
-          pv.position.y = pv.usualY
+          pv.y = pv.usualY
           depth = 128 - aByte
-          pv.position.z = depth * 10
+          pv.z = depth * 10
         pIdx    += 1
         byteIdx += 1
         
     particleSystem.geometry.__dirtyVertices = yes
+    particleSystem.geometry.verticesNeedUpdate = true;
     
   connect = ->
     reconnectDelay = 10
