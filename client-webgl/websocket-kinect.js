@@ -149,7 +149,6 @@
     seenKeyFrame = null;
     qtl = qtr = qbl = qbr = null;
     pvs = particles.vertices;
-    console.log(pvs);
     pLen = pvs.length;
     rawDataLen = 5 + pLen;
     outArrays = (function() {
